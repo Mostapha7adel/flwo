@@ -35,6 +35,14 @@ async function bootstrap() {
     process.exit(1)
   }
 
+  try {
+    console.log('🌱 Running seed...')
+    execSync('node prisma/seed.js', { stdio: 'inherit', cwd: process.cwd() })
+    console.log('✅ Seed complete')
+  } catch (err) {
+    console.warn('⚠️  Seed skipped (data may already exist)')
+  }
+
   const server = http.createServer(app)
 
   const io = new Server(server, {
