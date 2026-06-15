@@ -1,37 +1,29 @@
-# DesignFlow Platform — Master Guide
+---
+title: DesignFlow
+emoji: 🚀
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+pinned: false
+app_port: 5000
+fullWidth: true
+---
 
-## الملفات
+# DesignFlow - منصة قوالب التصميم
 
-| الملف | المحتوى |
-|-------|---------|
-| `PHASE_1_FRONTEND.md` | تصميم وبناء الـ React Frontend كامل — كل صفحة بالتفصيل |
-| `PHASE_2_BACKEND.md` | Node.js + Express + PostgreSQL + Redis + Security |
-| `PHASE_3_TESTING.md` | Unit + Integration + Load + Security Tests |
-| `API_REFERENCE.md` | توثيق كل الـ endpoints بالتفصيل |
+Full-stack template marketplace platform (RTL/Arabic).
 
-## ترتيب التنفيذ
+## Environment Variables
 
-```
-PHASE_1  →  PHASE_2  →  ربط Frontend بالـ API  →  PHASE_3
-```
+Set these in your Space secrets (Settings → Repository secrets):
 
-## Tech Stack
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_ACCESS_SECRET` | JWT access token secret |
+| `JWT_REFRESH_SECRET` | JWT refresh token secret |
+| `REDIS_URL` | Redis URL (optional) |
 
-```
-Frontend:  React 18 + Vite + Tailwind + Zustand + DnD Kit
-Backend:   Node.js + Express.js
-Database:  PostgreSQL + Prisma ORM
-Cache:     Redis (ioredis)
-Auth:      JWT (Access 15min + Refresh 7d httpOnly cookie)
-Realtime:  Socket.IO
-Upload:    Cloudinary
-Deploy:    PM2 Cluster + Nginx
-```
+## Docker
 
-## الصفحات
-
-**عامة:** Landing Page · قائمة القوالب · معاينة قالب  
-**Auth:** تسجيل دخول · إنشاء حساب  
-**محرر:** Template Customizer (Drag & Drop + Color Pickers)  
-**داشبورد العميل:** نظرة عامة · طلباتي · المحادثة · الملف الشخصي  
-**لوحة الأدمن (مخفية):** إحصائيات · إدارة الطلبات · القوالب · Landing Editor · المحادثات
+This Space uses a Docker container running Express.js + React.

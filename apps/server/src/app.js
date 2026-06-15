@@ -51,6 +51,9 @@ app.use(generalLimiter)
 
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')))
 
+const clientDist = path.resolve(__dirname, '../../client/dist')
+app.use(express.static(clientDist))
+
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/templates', templateRoutes)
@@ -75,6 +78,9 @@ app.get('/api/health', (req, res) => {
 })
 
 app.use((req, res) => {
+  if (req.accepts('html') && !req.path.startsWith('/api')) {
+    return res.sendFile(path.resolve(clientDist, 'index.html'))
+  }
   res.status(404).json({ error: 'المسار غير موجود', code: 'NOT_FOUND' })
 })
 
