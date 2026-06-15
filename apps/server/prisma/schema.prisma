@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  SUPPORT
+  ACCOUNTS
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ContactMessageStatus {
+  OPEN
+  RESOLVED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  firstName    String   @db.VarChar(50)
+  lastName     String   @db.VarChar(50)
+  phone        String   @unique @db.VarChar(20)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @db.Text
+  avatarUrl    String?  @db.Text
+  role         Role      @default(CLIENT)
+  isActive     Boolean   @default(true)
+  isVIP        Boolean   @default(false)
+  bannedUntil  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  orders        Order[]
+  sentMessages  Message[]    @relation("SentMessages")
+  refreshTokens RefreshToken[]
+  notifications Notification[]
+  directConversations Conversation[] @relation("DirectConversations")
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Template {
+  id            String   @id @default(cuid())
+  title         String   @db.VarChar(100)
+  description   String   @db.Text
+  category      String   @db.VarChar(50)
+  price         Decimal  @db.Decimal(10, 2)
+  previewUrl    String   @db.Text
+  demoUrl       String?  @db.Text
+  tags          String[]
+  isPublished   Boolean  @default(false)
+  defaultColors Json
+  components    Json
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([isPublished])
+  @@index([category])
+  @@index([sortOrder])
+  @@map("templates")
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  templateId    String
+  template      Template    @relation(fields: [templateId], references: [id])
+  status        OrderStatus @default(PENDING)
+  customization Json
+  totalAmount   Decimal     @db.Decimal(10, 2)
+  notes         String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  conversation Conversation?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([templateId])
+  @@map("orders")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  orderId   String?  @unique
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  clientId  String?
+  client    User?    @relation("DirectConversations", fields: [clientId], references: [id])
+  type      String   @default("ORDER")
+  isOpen    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+
+  @@index([updatedAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  content        String       @db.Text
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@index([isRead])
+  @@map("messages")
+}
+
+model LandingContent {
+  id        String   @id @default(cuid())
+  section   String   @unique @db.VarChar(50)
+  content   Json
+  updatedAt DateTime @updatedAt
+
+  @@map("landing_content")
+}
+
+model ContactMessage {
+  id        String               @id @default(cuid())
+  name      String               @db.VarChar(100)
+  email     String               @db.VarChar(255)
+  phone     String?              @db.VarChar(20)
+  subject   String               @db.VarChar(200)
+  message   String               @db.Text
+  isRead    Boolean              @default(false)
+  status    ContactMessageStatus @default(OPEN)
+  createdAt DateTime             @default(now())
+
+  replies ContactReply[]
+
+  @@index([createdAt])
+  @@index([isRead])
+  @@index([status])
+  @@map("contact_messages")
+}
+
+model ContactReply {
+  id        String         @id @default(cuid())
+  messageId String
+  message   ContactMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  content   String         @db.Text
+  isAdmin   Boolean        @default(true)
+  createdAt DateTime       @default(now())
+
+  @@map("contact_replies")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String   @db.VarChar(200)
+  body      String   @db.Text
+  type      String   @db.VarChar(50)
+  link      String?  @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
