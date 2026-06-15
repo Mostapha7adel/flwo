@@ -77,15 +77,6 @@ app.use('/api/contact', contactRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use(`/api/${config.ADMIN_ROUTE_HINT}`, adminRoutes)
 
-app.get('/', (req, res) => {
-  res.json({
-    name: 'Templyn API',
-    version: '1.0.0',
-    status: 'running',
-    docs: '/api'
-  })
-})
-
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
