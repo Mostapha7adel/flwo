@@ -65,7 +65,7 @@ app.use(generalLimiter)
 
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')))
 
-const clientDist = path.resolve(__dirname, '../../client/dist')
+const clientDist = path.resolve(__dirname, '../../../client/dist')
 if (fs.existsSync(path.join(clientDist, 'index.html'))) {
   app.use(express.static(clientDist))
   console.log('✅ Serving React client from', clientDist)
