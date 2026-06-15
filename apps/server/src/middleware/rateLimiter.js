@@ -24,7 +24,7 @@ function makeLimit({ prefix, windowMs, max, skipSuccess = false, message }) {
 
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'عدد كبير جداً من الطلبات، حاول بعد 15 دقيقة', code: 'RATE_LIMIT_EXCEEDED' }

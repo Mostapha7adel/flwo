@@ -61,7 +61,6 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
-app.use(generalLimiter)
 
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')))
 
@@ -72,6 +71,8 @@ if (fs.existsSync(path.join(clientDist, 'index.html'))) {
 } else {
   console.warn('⚠️  Client build not found at', clientDist)
 }
+
+app.use(generalLimiter)
 
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
