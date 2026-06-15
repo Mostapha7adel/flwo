@@ -23,6 +23,8 @@ import notificationRoutes from './modules/notifications/notifications.routes.js'
 
 const app = express()
 
+app.set('trust proxy', 1)
+
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
@@ -35,12 +37,23 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      frameAncestors: ["'none'"],
+      frameAncestors: ["'self'", "https://huggingface.co", "https://*.hf.space"],
     },
   },
 }))
 app.use(cors({
-  origin: config.FRONTEND_URL,
+  origin: function (origin, callback) {
+    const allowed = [
+      config.FRONTEND_URL,
+      'https://huggingface.co',
+      ...(config.NODE_ENV === 'development' ? ['http://localhost:5173'] : []),
+    ].filter(Boolean)
+    if (!origin || allowed.some(a => origin.startsWith(a.replace(/\/$/, '')) || origin.includes('.hf.space'))) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   credentials: true,
 }))
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
