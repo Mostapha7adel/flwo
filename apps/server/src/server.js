@@ -1,5 +1,6 @@
 import http from 'http'
 import { Server } from 'socket.io'
+import { execSync } from 'child_process'
 import app from './app.js'
 import { config } from './config/index.js'
 import { prisma } from './config/database.js'
@@ -8,7 +9,7 @@ import { setupChatSocket } from './modules/chat/chat.socket.js'
 import { verifySocketToken } from './lib/jwt.js'
 
 async function bootstrap() {
-  try { await redis.connect() } catch {} // try connecting in background
+  try { await redis.connect() } catch {}
 
   try {
     await redis.ping()
@@ -22,6 +23,15 @@ async function bootstrap() {
     console.log('✅ Database connected')
   } catch (err) {
     console.error('❌ Database connection failed:', err)
+    process.exit(1)
+  }
+
+  try {
+    console.log('📦 Running database migrations...')
+    execSync('npx prisma db push --accept-data-loss --skip-generate', { stdio: 'inherit', cwd: process.cwd() })
+    console.log('✅ Database schema synced')
+  } catch (err) {
+    console.error('❌ Database migration failed:', err)
     process.exit(1)
   }
 
