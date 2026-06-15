@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import cookieParser from 'cookie-parser'
 import path from 'path'
+import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { config } from './config/index.js'
 import { generalLimiter } from './middleware/rateLimiter.js'
@@ -65,7 +66,12 @@ app.use(generalLimiter)
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')))
 
 const clientDist = path.resolve(__dirname, '../../client/dist')
-app.use(express.static(clientDist))
+if (fs.existsSync(path.join(clientDist, 'index.html'))) {
+  app.use(express.static(clientDist))
+  console.log('✅ Serving React client from', clientDist)
+} else {
+  console.warn('⚠️  Client build not found at', clientDist)
+}
 
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
@@ -83,7 +89,11 @@ app.get('/api/health', (req, res) => {
 
 app.use((req, res) => {
   if (req.accepts('html') && !req.path.startsWith('/api')) {
-    return res.sendFile(path.resolve(clientDist, 'index.html'))
+    const indexPath = path.resolve(clientDist, 'index.html')
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath)
+    }
+    return res.status(200).send('<h1>DesignFlow</h1><p>Client is being built...</p>')
   }
   res.status(404).json({ error: 'المسار غير موجود', code: 'NOT_FOUND' })
 })
