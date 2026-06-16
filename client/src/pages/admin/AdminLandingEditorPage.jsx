@@ -120,7 +120,6 @@ export default function AdminLandingEditorPage() {
       steps,
       testimonials,
       footer: { email: footerEmail, phone: footerPhone, address: footerAddress, socialLinks },
-      site: { logoUrl },
     })
   }
 
@@ -442,16 +441,25 @@ export default function AdminLandingEditorPage() {
                   try {
                     const form = new FormData()
                     form.append('file', file)
-                    const res = await api.post('/admin/upload/media', form)
-                    setLogoUrl(res.data.url)
-                    toast.success('تم رفع الشعار')
+                    const uploadRes = await api.post('/admin/upload/media', form)
+                    await api.put('/admin/site', { logoUrl: uploadRes.data.url })
+                    setLogoUrl(uploadRes.data.url)
+                    toast.success('تم حفظ الشعار')
                   } catch {
                     toast.error('فشل رفع الشعار')
                   }
                 }} />
               </label>
               {logoUrl && (
-                <button onClick={() => setLogoUrl('')} className="text-sm text-red-500 hover:underline">إزالة</button>
+                <button onClick={async () => {
+                  try {
+                    await api.put('/admin/site', { logoUrl: '' })
+                    setLogoUrl('')
+                    toast.success('تم إزالة الشعار')
+                  } catch {
+                    toast.error('فشل إزالة الشعار')
+                  }
+                }} className="text-sm text-red-500 hover:underline">إزالة</button>
               )}
             </div>
             <p className="text-xs text-gray-400 mt-2">jpg, png, webp — يفضل شعار بخلفية شفافة</p>

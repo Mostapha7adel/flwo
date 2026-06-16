@@ -335,6 +335,7 @@ router.put('/landing', validate(z.object({}).passthrough()), async (req, res, ne
     const data = req.validatedData
     const ops = []
     for (const [section, content] of Object.entries(data)) {
+      if (section === 'site') continue
       const schema = getLandingSchema(section)
       if (!schema) continue
       const parsed = schema.safeParse(content)
@@ -349,7 +350,7 @@ router.put('/landing', validate(z.object({}).passthrough()), async (req, res, ne
       }))
     }
     if (ops.length) await prisma.$transaction(ops)
-    res.json({ message: 'تم حفظ التعديلات بنجاح' })
+    res.json({ message: 'تم حفظ التغييرات بنجاح' })
   } catch (err) { next(err) }
 })
 
@@ -357,6 +358,18 @@ router.post('/upload/media', uploadLimiter, uploadMedia, validateFileContent, (r
   try {
     if (!req.file) throw new AppError('الملف مطلوب', 400, 'FILE_REQUIRED')
     res.json({ url: toPublicUrl(req.file.path), name: req.file.filename })
+  } catch (err) { next(err) }
+})
+
+router.put('/site', async (req, res, next) => {
+  try {
+    const { logoUrl } = req.body
+    await prisma.landingContent.upsert({
+      where: { section: 'site' },
+      create: { section: 'site', content: { logoUrl: logoUrl || '' } },
+      update: { content: { logoUrl: logoUrl || '' } },
+    })
+    res.json({ message: 'تم حفظ الشعار' })
   } catch (err) { next(err) }
 })
 
