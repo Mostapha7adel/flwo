@@ -206,3 +206,19 @@ model Notification {
   @@index([createdAt])
   @@map("notifications")
 }
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String   @db.VarChar(300)
+  amount      Decimal  @db.Decimal(10, 2)
+  category    String   @db.VarChar(50)
+  date        DateTime @default(now())
+  notes       String?  @db.Text
+  createdBy   String   @db.VarChar(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([category])
+  @@map("expenses")
+}

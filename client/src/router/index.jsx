@@ -34,6 +34,7 @@ const AdminChatPage = lazy(() => import('../pages/admin/AdminChatPage'))
 const AdminContactPage = lazy(() => import('../pages/admin/AdminContactPage'))
 const AdminUsersPage = lazy(() => import('../pages/admin/AdminUsersPage'))
 const AdminAccountsPage = lazy(() => import('../pages/admin/AdminAccountsPage'))
+const AdminAccountingPage = lazy(() => import('../pages/admin/AdminAccountingPage'))
 
 const router = createBrowserRouter([
   {
@@ -98,6 +99,7 @@ const router = createBrowserRouter([
       { path: 'users', element: <PageTransition><AdminUsersPage /></PageTransition> },
       { path: 'contact', element: <PageTransition><AdminContactPage /></PageTransition> },
       { path: 'accounts', element: <PageTransition><AdminAccountsPage /></PageTransition> },
+      { path: 'accounting', element: <PageTransition><AdminAccountingPage /></PageTransition> },
     ]
   },
 

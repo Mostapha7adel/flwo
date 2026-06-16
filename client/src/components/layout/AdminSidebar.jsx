@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ShoppingBag, Palette, Monitor, MessageCircle, Mail, LogOut, X, Users, UserCog, Shield } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, Palette, Monitor, MessageCircle, Mail, LogOut, X, Users, UserCog, Shield, DollarSign } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { cn } from '../../utils/cn'
 
@@ -15,6 +15,7 @@ const links = [
 
 const accounts = [
   { to: '/x9k2-manage/panel/accounts', icon: UserCog, label: 'الحسابات' },
+  { to: '/x9k2-manage/panel/accounting', icon: DollarSign, label: 'المحاسبة' },
 ]
 
 export function AdminSidebar({ open, onClose }) {

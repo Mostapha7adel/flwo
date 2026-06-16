@@ -427,6 +427,151 @@ router.patch('/notifications/read-all', notificationsCtrl.markAllRead)
 router.get('/contact', contactCtrl.adminList)
 router.get('/contact/:id', contactCtrl.adminGetById)
 router.post('/contact/:id/reply', validate(z.object({ content: z.string().min(1, 'محتوى الرد مطلوب') })), contactCtrl.adminReply)
+
+// Accounting
+router.get('/accounts/summary', async (req, res, next) => {
+  try {
+    const now = new Date()
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+
+    const [paidOrders, pendingOrders, totalExpenses, monthExpenses, lastMonthOrders] = await Promise.all([
+      prisma.order.aggregate({ _sum: { totalAmount: true }, where: { status: 'COMPLETED' } }),
+      prisma.order.aggregate({ _sum: { totalAmount: true }, where: { status: { in: ['PENDING', 'ACCEPTED', 'IN_PROGRESS'] } } }),
+      prisma.expense.aggregate({ _sum: { amount: true } }),
+      prisma.expense.aggregate({ _sum: { amount: true }, where: { date: { gte: firstDay } } }),
+      prisma.order.aggregate({ _sum: { totalAmount: true }, where: { status: 'COMPLETED', createdAt: { gte: lastMonth, lt: firstDay } } }),
+    ])
+
+    const totalRevenue = Number(paidOrders._sum.totalAmount || 0)
+    const pendingRevenue = Number(pendingOrders._sum.totalAmount || 0)
+    const totalExpense = Number(totalExpenses._sum.amount || 0)
+
+    res.json({
+      totalRevenue,
+      totalExpenses: totalExpense,
+      netProfit: totalRevenue - totalExpense,
+      pendingRevenue,
+      monthExpenses: Number(monthExpenses._sum.amount || 0),
+      lastMonthRevenue: Number(lastMonthOrders._sum.totalAmount || 0),
+      orderCounts: {
+        completed: await prisma.order.count({ where: { status: 'COMPLETED' } }),
+        pending: await prisma.order.count({ where: { status: 'PENDING' } }),
+        inProgress: await prisma.order.count({ where: { status: 'IN_PROGRESS' } }),
+        cancelled: await prisma.order.count({ where: { status: 'CANCELLED' } }),
+      },
+    })
+  } catch (err) { next(err) }
+})
+
+router.get('/accounts/expenses', async (req, res, next) => {
+  try {
+    const { page, limit } = getPagination(req.query)
+    const category = req.query.category
+    const from = req.query.from ? new Date(req.query.from) : null
+    const to = req.query.to ? new Date(req.query.to) : null
+
+    const where = {}
+    if (category) where.category = category
+    if (from || to) {
+      where.date = {}
+      if (from) where.date.gte = from
+      if (to) where.date.lte = to
+    }
+
+    const [expenses, total] = await Promise.all([
+      prisma.expense.findMany({
+        where,
+        orderBy: { date: 'desc' },
+        take: limit,
+        skip: (page - 1) * limit,
+      }),
+      prisma.expense.count({ where }),
+    ])
+
+    const totalAmount = await prisma.expense.aggregate({ _sum: { amount: true }, where })
+
+    res.json({
+      expenses: expenses.map(e => ({ ...e, amount: Number(e.amount) })),
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      totalAmount: Number(totalAmount._sum.amount || 0),
+    })
+  } catch (err) { next(err) }
+})
+
+router.post('/accounts/expenses', validate(z.object({
+  description: z.string().min(1).max(300),
+  amount: z.number().positive(),
+  category: z.string().min(1).max(50),
+  date: z.string().optional(),
+  notes: z.string().max(500).optional(),
+})), async (req, res, next) => {
+  try {
+    const d = req.validatedData
+    const expense = await prisma.expense.create({
+      data: {
+        description: d.description,
+        amount: d.amount,
+        category: d.category,
+        date: d.date ? new Date(d.date) : new Date(),
+        notes: d.notes || null,
+        createdBy: req.user.firstName + ' ' + req.user.lastName,
+      },
+    })
+    res.json({ ...expense, amount: Number(expense.amount) })
+  } catch (err) { next(err) }
+})
+
+router.put('/accounts/expenses/:id', validate(z.object({
+  description: z.string().min(1).max(300).optional(),
+  amount: z.number().positive().optional(),
+  category: z.string().min(1).max(50).optional(),
+  date: z.string().optional(),
+  notes: z.string().max(500).optional().nullable(),
+})), async (req, res, next) => {
+  try {
+    const d = req.validatedData
+    const updateData = {}
+    if (d.description !== undefined) updateData.description = d.description
+    if (d.amount !== undefined) updateData.amount = d.amount
+    if (d.category !== undefined) updateData.category = d.category
+    if (d.date !== undefined) updateData.date = new Date(d.date)
+    if (d.notes !== undefined) updateData.notes = d.notes
+
+    const expense = await prisma.expense.update({
+      where: { id: req.params.id },
+      data: updateData,
+    })
+    res.json({ ...expense, amount: Number(expense.amount) })
+  } catch (err) { next(err) }
+})
+
+router.delete('/accounts/expenses/:id', async (req, res, next) => {
+  try {
+    await prisma.expense.delete({ where: { id: req.params.id } })
+    res.json({ message: 'تم حذف المصروف' })
+  } catch (err) { next(err) }
+})
+
+// Revenue breakdown by month
+router.get('/accounts/revenue-history', async (req, res, next) => {
+  try {
+    const months = await prisma.$queryRaw`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') as month,
+        SUM("totalAmount")::float as revenue,
+        COUNT(*)::int as orders
+      FROM orders
+      WHERE status = 'COMPLETED'
+      GROUP BY DATE_TRUNC('month', "createdAt")
+      ORDER BY month DESC
+      LIMIT 12
+    `
+    res.json(months)
+  } catch (err) { next(err) }
+})
 router.patch('/contact/:id/read', contactCtrl.adminToggleRead)
 router.patch('/contact/:id/status', contactCtrl.adminToggleStatus)
 router.delete('/contact/:id', contactCtrl.adminDelete)
