@@ -14,7 +14,7 @@ function parseExpires(expiresStr) {
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   maxAge: parseExpires(config.JWT_REFRESH_EXPIRES),
   path: '/api/auth/refresh'
 }
