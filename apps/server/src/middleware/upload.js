@@ -15,7 +15,24 @@ const MAGIC_BYTES = {
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const PERSISTENT_DIR = '/data/uploads'
-const uploadsDir = fs.existsSync('/data') ? PERSISTENT_DIR : path.resolve(__dirname, '../../uploads')
+const LOCAL_DIR = path.resolve(__dirname, '../../uploads')
+const uploadsDir = fs.existsSync('/data') ? PERSISTENT_DIR : LOCAL_DIR
+
+if (uploadsDir === PERSISTENT_DIR && fs.existsSync(LOCAL_DIR)) {
+  try {
+    const entries = fs.readdirSync(LOCAL_DIR)
+    for (const entry of entries) {
+      const src = path.join(LOCAL_DIR, entry)
+      const dst = path.join(PERSISTENT_DIR, entry)
+      if (!fs.existsSync(dst)) {
+        fs.cpSync(src, dst, { recursive: true })
+      }
+    }
+    console.log('📦 Migrated existing uploads to /data/uploads')
+  } catch (e) {
+    console.warn('⚠️ Could not migrate uploads:', e.message)
+  }
+}
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
