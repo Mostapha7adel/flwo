@@ -23,7 +23,7 @@ export function AdminSidebar({ open, onClose }) {
 
   const handleLogout = () => {
     logout()
-    navigate('/')
+    navigate('/x9k2-manage')
   }
 
   return (
