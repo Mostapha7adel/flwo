@@ -1,6 +1,7 @@
 import { prisma } from '../../config/database.js'
 import { saveMessage } from './chat.service.js'
 import { STAFF_ROLES } from '../../lib/constants.js'
+import { handleClientMessage } from './bot.service.js'
 
 const msgRateLimiter = new Map()
 
@@ -30,8 +31,9 @@ export function setupChatSocket(io) {
         if (!conversation) return
 
         const isAdmin = STAFF_ROLES.includes(socket.userRole)
-        const isOwner = conversation.order.userId === userId
-        if (isAdmin || isOwner) {
+        const isOwner = conversation.order?.userId === userId
+        const isClient = conversation.clientId === userId
+        if (isAdmin || isOwner || isClient) {
           socket.join(`conversation:${conversationId}`)
         }
       } catch { /* silently fail */ }
@@ -50,6 +52,14 @@ export function setupChatSocket(io) {
         io.to(`conversation:${conversationId}`).emit('chat:newMessage', message)
         if (ownerId !== userId) {
           io.to(`user:${ownerId}`).emit('chat:newMessage', message)
+        }
+
+        // لو المرسل عميل (مش أدمن) — شوف لو محتاج رد تلقائي
+        if (!STAFF_ROLES.includes(socket.userRole)) {
+          const botMsg = await handleClientMessage(conversationId, content.trim())
+          if (botMsg) {
+            io.to(`conversation:${conversationId}`).emit('chat:newMessage', botMsg)
+          }
         }
       } catch { /* fail silently */ }
     })

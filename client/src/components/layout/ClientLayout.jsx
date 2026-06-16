@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import { ClientSidebar } from './ClientSidebar'
 import { NotificationBell } from '../shared/NotificationBell'
+import { SupportWidget } from '../shared/SupportWidget'
 
 export default function ClientLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -31,6 +32,7 @@ export default function ClientLayout() {
         <main className="flex-1 p-6 overflow-auto">
           <Outlet />
         </main>
+        <SupportWidget />
       </div>
     </div>
   )
