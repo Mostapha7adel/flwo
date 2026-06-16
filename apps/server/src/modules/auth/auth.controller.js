@@ -31,17 +31,33 @@ export async function register(req, res, next) {
 export async function login(req, res, next) {
   try {
     const { email, password } = req.validatedData
-    const { user, accessToken, refreshToken } = await authService.loginUser(email, password)
-    res.cookie('refresh_token', refreshToken, REFRESH_COOKIE_OPTIONS)
-    res.json({ user, accessToken })
+    const result = await authService.loginUser(email, password)
+    const cookieName = result.user.role !== 'CLIENT' ? 'admin_refresh_token' : 'refresh_token'
+    res.cookie(cookieName, result.refreshToken, REFRESH_COOKIE_OPTIONS)
+    res.json({ user: result.user, accessToken: result.accessToken })
   } catch (err) { next(err) }
 }
 
 export async function refresh(req, res, next) {
   try {
-    const oldToken = req.cookies.refresh_token
-    const { user, accessToken, refreshToken } = await authService.refreshUserToken(oldToken)
-    res.cookie('refresh_token', refreshToken, REFRESH_COOKIE_OPTIONS)
+    let user, accessToken, refreshToken, isAdmin
+
+    if (req.cookies.refresh_token) {
+      try {
+        const result = await authService.refreshUserToken(req.cookies.refresh_token, true)
+        user = result.user; accessToken = result.accessToken; refreshToken = result.refreshToken; isAdmin = result.isAdmin
+      } catch {}
+    }
+
+    if (!user && req.cookies.admin_refresh_token) {
+      const result = await authService.refreshUserToken(req.cookies.admin_refresh_token, false)
+      user = result.user; accessToken = result.accessToken; refreshToken = result.refreshToken; isAdmin = true
+    }
+
+    if (!user) throw new Error('NO_TOKEN')
+
+    const cookieName = isAdmin ? 'admin_refresh_token' : 'refresh_token'
+    res.cookie(cookieName, refreshToken, REFRESH_COOKIE_OPTIONS)
     res.json({ user, accessToken })
   } catch (err) { next(err) }
 }
@@ -51,6 +67,7 @@ export async function logout(req, res, next) {
     const accessToken = req.headers.authorization?.split(' ')[1]
     await authService.logoutUser(req.user.id, accessToken)
     res.clearCookie('refresh_token', { path: '/api/auth/refresh' })
+    res.clearCookie('admin_refresh_token', { path: '/api/auth/refresh' })
     res.json({ message: 'تم تسجيل الخروج بنجاح' })
   } catch (err) { next(err) }
 }

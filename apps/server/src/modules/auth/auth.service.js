@@ -76,7 +76,7 @@ export async function loginUser(email, password) {
   return { user: safeUser, accessToken, refreshToken }
 }
 
-export async function refreshUserToken(oldRefreshToken) {
+export async function refreshUserToken(oldRefreshToken, expectClient = true) {
   if (!oldRefreshToken) throw new AppError('لم يتم توفير refresh token', 401, 'NO_REFRESH_TOKEN')
   let decoded
   try { decoded = verifyRefreshToken(oldRefreshToken) }
@@ -97,8 +97,12 @@ export async function refreshUserToken(oldRefreshToken) {
   if (!user || !user.isActive) {
     throw new AppError('بيانات تسجيل الدخول غير صحيحة', 401, 'INVALID_CREDENTIALS')
   }
+  if (expectClient && user.role !== 'CLIENT') {
+    throw new AppError('نوع الحساب غير متطابق', 401, 'ROLE_MISMATCH')
+  }
   const { accessToken, refreshToken } = await createTokenPair(user.id, user.role)
-  return { user, accessToken, refreshToken }
+  const isAdmin = user.role !== 'CLIENT'
+  return { user, accessToken, refreshToken, isAdmin }
 }
 
 export async function changeUserPassword(userId, currentPassword, newPassword) {

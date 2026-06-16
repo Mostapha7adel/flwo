@@ -41,7 +41,7 @@ router.post('/login', adminLoginLimiter, validate(loginSchema), async (req, res,
       data: { token: hashedRefresh, userId: user.id, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }
     })
     const { passwordHash, ...safeUser } = user
-    res.cookie('refresh_token', refreshToken, {
+    res.cookie('admin_refresh_token', refreshToken, {
       httpOnly: true, secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 7 * 24 * 60 * 60 * 1000, path: '/api/auth/refresh'
     })
