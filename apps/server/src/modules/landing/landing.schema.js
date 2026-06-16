@@ -21,15 +21,11 @@ export const SECTION_SCHEMAS = {
     animation: z.enum(['float', 'fade', 'slide', 'pulse', 'none']).optional().default('float'),
   }),
 
-  features: z.object({
-    title: safeText(80).optional(),
-    description: safeText(200).optional(),
-    items: z.array(z.object({
-      icon: z.string().max(30).regex(/^[a-zA-Z0-9-]+$/, 'اسم أيقونة غير صحيح'),
-      title: safeText(60),
-      description: safeText(250),
-    })).min(1).max(12),
-  }).optional(),
+  features: z.array(z.object({
+    icon: z.string().max(30).regex(/^[a-zA-Z0-9-]+$/, 'اسم أيقونة غير صحيح'),
+    title: safeText(60),
+    description: safeText(250),
+  })).optional(),
 
   steps: z.array(z.object({
     title: safeText(60),
