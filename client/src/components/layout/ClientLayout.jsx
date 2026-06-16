@@ -3,7 +3,6 @@ import { Outlet } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import { ClientSidebar } from './ClientSidebar'
 import { NotificationBell } from '../shared/NotificationBell'
-import { SupportWidget } from '../shared/SupportWidget'
 import { useAuthStore } from '../../store/authStore'
 import { useSiteSettings } from '../../hooks/useSiteSettings'
 
@@ -60,7 +59,6 @@ export default function ClientLayout() {
         <main className="flex-1 p-6 overflow-auto">
           <Outlet />
         </main>
-        <SupportWidget />
       </div>
     </div>
   )
