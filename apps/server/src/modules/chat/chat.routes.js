@@ -13,6 +13,8 @@ const getConversationSchema = z.object({ orderId: z.string().min(1) })
 router.use(authenticate)
 router.get('/conversation', validate(getConversationSchema, 'query'), ctrl.getConversation)
 router.get('/direct/:clientId', ctrl.getDirectConversation)
+router.post('/direct', validate(z.object({ clientId: z.string().min(1), title: z.string().optional() })), ctrl.createDirectConversation)
+router.get('/my', ctrl.getClientConversations)
 router.get('/conversation/:conversationId/messages', ctrl.getMessages)
 router.post('/conversation/:conversationId/messages', chatLimiter, validate(sendMessageSchema), ctrl.sendMessage)
 

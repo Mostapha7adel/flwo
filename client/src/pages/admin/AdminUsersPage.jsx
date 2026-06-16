@@ -25,6 +25,8 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('')
   const [banModal, setBanModal] = useState(null)
   const [banDuration, setBanDuration] = useState('7')
+  const [chatModal, setChatModal] = useState(null)
+  const [chatTitle, setChatTitle] = useState('')
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-users', roleFilter],
@@ -50,13 +52,19 @@ export default function AdminUsersPage() {
     onError: () => toast.error('فشل تحديث حالة التميز'),
   })
 
-  const handleChat = async (user) => {
-    try {
-      const res = await api.get(`/chat/direct/${user.id}`)
+  const chatMutation = useMutation({
+    mutationFn: ({ clientId, title }) => api.post('/chat/direct', { clientId, title }),
+    onSuccess: (res) => {
+      setChatModal(null)
+      setChatTitle('')
       navigate(`/x9k2-manage/panel/chat/${res.data.conversation.id}`)
-    } catch {
-      toast.error('فشل فتح المحادثة')
-    }
+    },
+    onError: () => toast.error('فشل فتح المحادثة'),
+  })
+
+  const handleChat = (user) => {
+    setChatTitle('')
+    setChatModal(user)
   }
 
   const users = (data?.users || []).filter(u => {
@@ -205,6 +213,25 @@ export default function AdminUsersPage() {
             <div className="flex gap-3 justify-end">
               <Button variant="secondary" onClick={() => setBanModal(null)}>إلغاء</Button>
               <Button variant="primary" onClick={() => handleBan(banModal)}>حظر</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {chatModal && (
+        <Modal onClose={() => { setChatModal(null); setChatTitle('') }} title={`محادثة مع ${chatModal.firstName} ${chatModal.lastName}`}>
+          <div className="space-y-4 p-4">
+            <Input
+              label="عنوان المحادثة"
+              value={chatTitle}
+              onChange={(e) => setChatTitle(e.target.value)}
+              placeholder="مثال: استفسار عن طلب"
+            />
+            <div className="flex gap-3 justify-end">
+              <Button variant="secondary" onClick={() => { setChatModal(null); setChatTitle('') }}>إلغاء</Button>
+              <Button variant="primary" onClick={() => chatMutation.mutate({ clientId: chatModal.id, title: chatTitle })}>
+                بدء المحادثة
+              </Button>
             </div>
           </div>
         </Modal>

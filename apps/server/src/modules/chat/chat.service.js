@@ -11,6 +11,12 @@ const MSG_SELECT = {
   sender: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true } }
 }
 
+const CONV_SELECT = {
+  id: true, type: true, title: true, isOpen: true, createdAt: true, updatedAt: true,
+  order: { select: { id: true, orderNumber: true, template: { select: { title: true } } } },
+  messages: { orderBy: { createdAt: 'desc' }, take: 1 }
+}
+
 export async function getOrCreateConversation(orderId, userId) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -25,23 +31,35 @@ export async function getOrCreateConversation(orderId, userId) {
   })
   if (!conversation) {
     conversation = await prisma.conversation.create({
-      data: { orderId, type: 'ORDER' },
+      data: { orderId, type: 'ORDER', title: `طلب #${order.orderNumber}` },
       include: { messages: { take: 0 } }
     })
   }
   return conversation
 }
 
-export async function createDirectConversation(clientId) {
-  const existing = await prisma.conversation.findFirst({
-    where: { clientId, type: 'DIRECT' },
-    include: { messages: { orderBy: { createdAt: 'asc' }, take: 50 } }
-  })
-  if (existing) return existing
+export async function createDirectConversation(clientId, title) {
   return prisma.conversation.create({
-    data: { clientId, type: 'DIRECT' },
+    data: { clientId, type: 'DIRECT', title: title || 'محادثة جديدة' },
     include: { messages: { take: 0 } }
   })
+}
+
+export async function getClientConversations(userId) {
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      OR: [
+        { order: { userId } },
+        { clientId: userId, type: 'DIRECT' }
+      ]
+    },
+    select: {
+      ...CONV_SELECT,
+      order: { select: { id: true, orderNumber: true, template: { select: { title: true } } } }
+    },
+    orderBy: { updatedAt: 'desc' }
+  })
+  return conversations
 }
 
 export async function sendMessage(userId, role, conversationId, content) {

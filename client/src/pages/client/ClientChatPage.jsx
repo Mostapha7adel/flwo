@@ -1,10 +1,10 @@
-import { MessageSquare, Loader } from 'lucide-react'
+import { MessageSquare, User, ArrowRight, Loader } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '../../components/shared/PageHeader'
-import { EmptyState } from '../../components/shared/EmptyState'
 import { ChatWindow } from '../../components/shared/ChatWindow'
-import { useNavigate } from 'react-router-dom'
-import { useEffect, useCallback, useState } from 'react'
+import { Spinner } from '../../components/ui/Spinner'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '../../store/authStore'
 import { connectSocket, getSocket, disconnectSocket } from '../../features/chat/socketClient'
 import { api } from '../../lib/axios'
@@ -21,120 +21,93 @@ function mapMessage(msg, userId) {
 
 export default function ClientChatPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const user = useAuthStore(s => s.user)
   const accessToken = useAuthStore(s => s.accessToken)
   const queryClient = useQueryClient()
   const [messages, setMessages] = useState([])
-  const [conversationId, setConversationId] = useState(null)
-  const [orderSubject, setOrderSubject] = useState('')
-  const urlParams = new URLSearchParams(window.location.search)
-  const urlConvId = urlParams.get('convId')
+  const [localConvId, setLocalConvId] = useState(null)
 
-  const { data: ordersData, isError: ordersError } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => api.get('/orders').then(r => r.data),
+  const urlConvId = searchParams.get('convId')
+  const currentConvId = localConvId || urlConvId
+
+  const { data: convsData, isLoading: convsLoading } = useQuery({
+    queryKey: ['client-conversations'],
+    queryFn: () => api.get('/chat/my').then(r => r.data),
   })
 
-  const activeOrder = urlConvId ? null : (ordersData?.orders || []).sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-  )[0]
+  const conversations = convsData?.conversations || []
 
-  const { data: conversationData, isLoading: convLoading } = useQuery({
-    queryKey: ['conversation', activeOrder?.id],
-    queryFn: () => api.get('/chat/conversation', { params: { orderId: activeOrder.id } }).then(r => r.data),
-    enabled: !!activeOrder && !urlConvId,
+  const { data: convDetail, isLoading: detailLoading } = useQuery({
+    queryKey: ['client-conversation-detail', currentConvId],
+    queryFn: () => api.get(`/chat/conversation/${currentConvId}/messages`).then(r => r.data),
+    enabled: !!currentConvId,
   })
 
-  const { data: directConvData, isLoading: directConvLoading } = useQuery({
-    queryKey: ['client-conversation-detail', urlConvId],
-    queryFn: () => api.get(`/chat/conversation/${urlConvId}/messages`).then(r => r.data),
-    enabled: !!urlConvId,
-  })
+  const selectedConv = currentConvId ? conversations.find(c => c.id === currentConvId) : null
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (directConvData) {
-      setConversationId(urlConvId)
-      setMessages((directConvData.messages || []).map(m => mapMessage(m, user?.id)))
-      setOrderSubject('')
-    } else if (conversationData) {
-      setConversationId(conversationData.id)
-      setMessages((conversationData.messages || []).map(m => mapMessage(m, user?.id)))
-      setOrderSubject(activeOrder?.template?.title || '')
+    if (convDetail?.messages) {
+      setMessages(convDetail.messages.map(m => mapMessage(m, user?.id)))
+    } else {
+      setMessages([])
     }
-  }, [conversationData, directConvData, user?.id, activeOrder?.template?.title, urlConvId])
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  const sendMutation = useMutation({
-    mutationFn: (content) => api.post(`/chat/conversation/${conversationId}/messages`, { content }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation', activeOrder?.id] })
-    },
-  })
+  }, [convDetail, user?.id])
 
   useEffect(() => {
-    if (!accessToken || !conversationId) return
+    if (!accessToken || !currentConvId) return
     const socket = connectSocket(accessToken)
     const handleNewMessage = (msg) => {
-      if (msg.conversationId === conversationId) {
+      queryClient.invalidateQueries({ queryKey: ['client-conversations'] })
+      if (msg.conversationId === currentConvId) {
         setMessages(prev => [...prev, mapMessage(msg, user.id)])
+        queryClient.invalidateQueries({ queryKey: ['client-conversation-detail', currentConvId] })
       }
     }
     socket.on('chat:newMessage', handleNewMessage)
-    function joinRoom() { socket.emit('chat:join', conversationId) }
+    function joinRoom() { socket.emit('chat:join', currentConvId) }
     if (socket.connected) joinRoom()
     else socket.once('connect', joinRoom)
     return () => { socket.off('chat:newMessage') }
-  }, [conversationId, user?.id, accessToken])
+  }, [currentConvId, user?.id, accessToken, queryClient])
 
-  useEffect(() => {
-    const socket = getSocket()
-    if (!socket?.connected || !conversationId) return
-    socket.emit('chat:join', conversationId)
-    return () => { socket.emit('chat:leave', conversationId) }
-  }, [conversationId])
+  const sendMutation = useMutation({
+    mutationFn: (text) => api.post(`/chat/conversation/${currentConvId}/messages`, { content: text }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-conversations'] })
+      queryClient.invalidateQueries({ queryKey: ['client-conversation-detail', currentConvId] })
+    },
+    onError: () => {},
+  })
 
-  useEffect(() => {
-    return () => disconnectSocket()
-  }, [])
-
-  const handleSend = useCallback((text) => {
-    if (!conversationId) return
+  const handleSend = (text) => {
+    if (!currentConvId) return
     sendMutation.mutate(text)
-  }, [conversationId, sendMutation])
+  }
 
-  if (ordersError) {
+  if (convsLoading) {
     return (
       <div>
-        <PageHeader title="المحادثة" />
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
-          <p className="text-red-700 font-medium">حدث خطأ أثناء تحميل البيانات</p>
+        <PageHeader title="المحادثات" />
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
         </div>
       </div>
     )
   }
 
-  if (!activeOrder) {
+  if (selectedConv) {
+    const conv = selectedConv
+    const label = conv.title || `طلب #${conv.order?.orderNumber || ''}`
     return (
       <div>
-        <PageHeader title="المحادثة" />
-        <EmptyState
-          icon={MessageSquare}
-          title="لا توجد محادثات نشطة حالياً"
-          description="سيتواصل معك فريق الدعم بعد مراجعة طلبك وقبوله"
-          actionLabel="تصفح القوالب"
-          onAction={() => navigate('/templates')}
-        />
-      </div>
-    )
-  }
-
-  if (convLoading) {
-    return (
-      <div>
-        <PageHeader title="المحادثة" />
-        <div className="flex items-center justify-center py-16">
-          <Loader className="w-6 h-6 animate-spin text-brand-500" />
+        <button onClick={() => { setLocalConvId(null); navigate('/dashboard/chat', { replace: true }) }} className="flex items-center gap-2 text-gray-500 hover:text-brand-600 mb-4 transition-colors">
+          <ArrowRight className="w-4 h-4" />
+          رجوع
+        </button>
+        <PageHeader title={label} />
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" style={{ height: '500px' }}>
+          <ChatWindow messages={messages} onSend={handleSend} />
         </div>
       </div>
     )
@@ -142,10 +115,40 @@ export default function ClientChatPage() {
 
   return (
     <div>
-      <PageHeader title="المحادثة" description={orderSubject ? `بخصوص: ${orderSubject}` : ''} />
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" style={{ height: '500px' }}>
-        <ChatWindow messages={messages} onSend={handleSend} />
-      </div>
+      <PageHeader title="المحادثات" />
+      {conversations.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+          <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 mb-2">لا توجد محادثات حالياً</p>
+          <p className="text-sm text-gray-400">عندما يقوم فريق الدعم بفتح محادثة معك، ستظهر هنا</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          {conversations.map(conv => {
+            const lastMsg = conv.messages?.[0]
+            const label = conv.title || conv.order?.template?.title || `طلب #${conv.order?.orderNumber}`
+            return (
+              <button
+                key={conv.id}
+                onClick={() => { setLocalConvId(conv.id); navigate(`/dashboard/chat?convId=${conv.id}`, { replace: true }) }}
+                className="w-full text-right px-4 py-3 border-b hover:bg-gray-50 transition-colors flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
+                  <User className="w-5 h-5 text-brand-600" />
+                </div>
+                <div className="flex-1 min-w-0 text-right">
+                  <p className="font-medium text-gray-900">{label}</p>
+                  <p className="text-xs text-gray-400">الدعم الفني</p>
+                  <p className="text-sm text-gray-500 truncate mt-0.5">{lastMsg?.content || 'لا توجد رسائل'}</p>
+                </div>
+                <span className="text-xs text-gray-400 shrink-0">
+                  {lastMsg ? new Date(lastMsg.createdAt).toLocaleDateString('ar-EG') : ''}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

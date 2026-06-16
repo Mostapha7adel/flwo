@@ -28,6 +28,28 @@ export async function getDirectConversation(req, res, next) {
   } catch (err) { next(err) }
 }
 
+export async function createDirectConversation(req, res, next) {
+  try {
+    const { clientId, title } = req.body
+    const client = await prisma.user.findUnique({
+      where: { id: clientId },
+      select: { id: true, firstName: true, lastName: true, email: true, role: true }
+    })
+    if (!client || client.role !== 'CLIENT') {
+      return res.status(404).json({ message: 'العميل غير موجود' })
+    }
+    const conversation = await chatService.createDirectConversation(clientId, title)
+    res.json({ conversation, client })
+  } catch (err) { next(err) }
+}
+
+export async function getClientConversations(req, res, next) {
+  try {
+    const conversations = await chatService.getClientConversations(req.user.id)
+    res.json({ conversations })
+  } catch (err) { next(err) }
+}
+
 export async function sendMessage(req, res, next) {
   try {
     const message = await chatService.sendMessage(
