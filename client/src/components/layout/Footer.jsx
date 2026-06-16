@@ -1,14 +1,9 @@
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { Mail, Phone, MapPin } from 'lucide-react'
-import { api } from '../../lib/axios'
+import { useSiteSettings } from '../../hooks/useSiteSettings'
 
 export function Footer() {
-  const { data: content } = useQuery({
-    queryKey: ['landing-content-footer'],
-    queryFn: () => api.get('/landing/content').then(r => r.data),
-    staleTime: 300000,
-  })
+  const { data: content } = useSiteSettings()
 
   const footer = content?.footer || {}
   const email = footer.email || 'support@designflow.com'
@@ -22,10 +17,16 @@ export function Footer() {
         <div className="grid md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">DF</span>
-              </div>
-              <span className="font-bold text-xl text-white">Templyn</span>
+              {content?.site?.logoUrl ? (
+                <img src={content.site.logoUrl} alt="Templyn" className="h-9 w-auto" />
+              ) : (
+                <>
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">DF</span>
+                  </div>
+                  <span className="font-bold text-xl text-white">Templyn</span>
+                </>
+              )}
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
               منصة تصميم احترافية تقدم قوالب جاهزة للتخصيص. حول فكرتك إلى موقع إلكتروني في دقائق.

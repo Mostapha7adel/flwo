@@ -48,8 +48,9 @@ export default function AdminLandingEditorPage() {
   const [footerPhone, setFooterPhone] = useState('')
   const [footerAddress, setFooterAddress] = useState('')
   const [socialLinks, setSocialLinks] = useState([])
+  const [logoUrl, setLogoUrl] = useState('')
 
-  const tabs = ['Hero', 'إعدادات الهيرو', 'المميزات', 'كيف يعمل', 'آراء العملاء', 'من نحن', 'صفحة عننا', 'فيديو تعريفي', 'Footer']
+  const tabs = ['Hero', 'إعدادات الهيرو', 'المميزات', 'كيف يعمل', 'آراء العملاء', 'من نحن', 'صفحة عننا', 'فيديو تعريفي', 'الشعار', 'Footer']
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-landing'],
@@ -96,6 +97,9 @@ export default function AdminLandingEditorPage() {
       setFooterAddress(data.footer.address || '')
       setSocialLinks(data.footer.socialLinks || [])
     }
+    if (data.site) {
+      setLogoUrl(data.site.logoUrl || '')
+    }
   }, [data])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -116,6 +120,7 @@ export default function AdminLandingEditorPage() {
       steps,
       testimonials,
       footer: { email: footerEmail, phone: footerPhone, address: footerAddress, socialLinks },
+      site: { logoUrl },
     })
   }
 
@@ -414,6 +419,43 @@ export default function AdminLandingEditorPage() {
               </Button>
             </div>
           </>
+        )
+
+      case 'الشعار':
+        return (
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">شعار الموقع</label>
+            <div className="flex items-center gap-4">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="h-16 w-auto rounded-xl border p-2" />
+              ) : (
+                <div className="h-16 w-36 rounded-xl border border-dashed flex items-center justify-center text-sm text-gray-400">
+                  لا يوجد شعار
+                </div>
+              )}
+              <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm text-gray-600">
+                <Upload className="w-4 h-4" />
+                {logoUrl ? 'تغيير الشعار' : 'رفع شعار'}
+                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  try {
+                    const form = new FormData()
+                    form.append('file', file)
+                    const res = await api.post('/admin/upload/media', form)
+                    setLogoUrl(res.data.url)
+                    toast.success('تم رفع الشعار')
+                  } catch {
+                    toast.error('فشل رفع الشعار')
+                  }
+                }} />
+              </label>
+              {logoUrl && (
+                <button onClick={() => setLogoUrl('')} className="text-sm text-red-500 hover:underline">إزالة</button>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">jpg, png, webp — يفضل شعار بخلفية شفافة</p>
+          </div>
         )
 
       default:

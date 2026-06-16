@@ -9,6 +9,7 @@ import { useAuthStore } from '../../store/authStore'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { Avatar } from '../../components/ui/Avatar'
+import { useSiteSettings } from '../../hooks/useSiteSettings'
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'الاسم يجب أن يكون حرفين على الأقل'),
@@ -28,6 +29,8 @@ const registerSchema = z.object({
 export default function RegisterPage() {
   const navigate = useNavigate()
   const { login } = useAuthStore()
+  const { data: landingContent } = useSiteSettings()
+  const logoUrl = landingContent?.site?.logoUrl
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
 
@@ -69,10 +72,16 @@ export default function RegisterPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <Link to="/" className="inline-flex items-center gap-2 mb-8">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">DF</span>
-              </div>
-              <span className="font-bold text-xl text-gray-900">Templyn</span>
+              {logoUrl ? (
+                <img src={logoUrl} alt="Templyn" className="h-9 w-auto" />
+              ) : (
+                <>
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">DF</span>
+                  </div>
+                  <span className="font-bold text-xl text-gray-900">Templyn</span>
+                </>
+              )}
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">إنشاء حساب جديد</h1>
             <p className="text-gray-500 mt-2">انضم إلينا وابدأ رحلتك</p>

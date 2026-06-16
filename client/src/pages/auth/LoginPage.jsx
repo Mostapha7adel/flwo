@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
+import { useSiteSettings } from '../../hooks/useSiteSettings'
 
 const loginSchema = z.object({
   email: z.string().email('بريد إلكتروني غير صحيح'),
@@ -17,6 +18,8 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const redirect = new URLSearchParams(location.search).get('redirect') || '/dashboard'
+  const { data: landingContent } = useSiteSettings()
+  const logoUrl = landingContent?.site?.logoUrl
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(loginSchema),
@@ -41,10 +44,16 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <Link to="/" className="inline-flex items-center gap-2 mb-8">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">DF</span>
-              </div>
-              <span className="font-bold text-xl text-gray-900">Templyn</span>
+              {logoUrl ? (
+                <img src={logoUrl} alt="Templyn" className="h-9 w-auto" />
+              ) : (
+                <>
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">DF</span>
+                  </div>
+                  <span className="font-bold text-xl text-gray-900">Templyn</span>
+                </>
+              )}
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">مرحباً بعودتك</h1>
             <p className="text-gray-500 mt-2">سجل دخولك للمتابعة</p>

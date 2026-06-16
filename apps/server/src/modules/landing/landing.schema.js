@@ -72,6 +72,10 @@ export const SECTION_SCHEMAS = {
     videoUrl: z.string().max(500).optional().or(z.literal('')),
     title: safeText(100).optional().or(z.literal('')),
   }).optional(),
+
+  site: z.object({
+    logoUrl: z.string().max(500).optional().or(z.literal('')),
+  }).optional(),
 }
 
 export function getLandingSchema(section) {

@@ -4,10 +4,13 @@ import { Menu } from 'lucide-react'
 import { AdminSidebar } from './AdminSidebar'
 import { NotificationBell } from '../shared/NotificationBell'
 import { useAuthStore } from '../../store/authStore'
+import { useSiteSettings } from '../../hooks/useSiteSettings'
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const user = useAuthStore(s => s.user)
+  const { data: landingContent } = useSiteSettings()
+  const logoUrl = landingContent?.site?.logoUrl
 
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : 'A'
 
@@ -23,10 +26,16 @@ export default function AdminLayout() {
         </header>
         <header className="h-16 bg-white border-b hidden md:flex items-center justify-between px-6 gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
-              <span className="text-white font-bold text-xs">DF</span>
-            </div>
-            <span className="font-bold text-base text-gray-900">Templyn</span>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Templyn" className="h-7 w-auto" />
+            ) : (
+              <>
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">DF</span>
+                </div>
+                <span className="font-bold text-base text-gray-900">Templyn</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600 font-medium">{user?.firstName} {user?.lastName}</span>

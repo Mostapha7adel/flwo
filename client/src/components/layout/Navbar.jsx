@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store/authStore'
 import { Avatar } from '../ui/Avatar'
 import { Dropdown, DropdownItem } from '../ui/Dropdown'
 import { Button } from '../ui/Button'
+import { useSiteSettings } from '../../hooks/useSiteSettings'
 
 export const Navbar = memo(function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -12,6 +13,8 @@ export const Navbar = memo(function Navbar() {
   const user = useAuthStore(s => s.user)
   const logout = useAuthStore(s => s.logout)
   const navigate = useNavigate()
+  const { data: landingContent } = useSiteSettings()
+  const logoUrl = landingContent?.site?.logoUrl
 
   useEffect(() => {
     let ticking = false
@@ -34,10 +37,16 @@ export const Navbar = memo(function Navbar() {
     }`}>
       <nav className="container mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">DF</span>
-          </div>
-          <span className="font-bold text-xl text-gray-900">Templyn</span>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Templyn" className="h-9 w-auto" />
+          ) : (
+            <>
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">DF</span>
+              </div>
+              <span className="font-bold text-xl text-gray-900">Templyn</span>
+            </>
+          )}
         </Link>
 
         <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
