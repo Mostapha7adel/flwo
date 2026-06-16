@@ -26,7 +26,7 @@ export default function AdminLayout() {
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
               <span className="text-white font-bold text-xs">DF</span>
             </div>
-            <span className="font-bold text-base text-gray-900">DesignFlow</span>
+            <span className="font-bold text-base text-gray-900">Templyn</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600 font-medium">{user?.firstName} {user?.lastName}</span>

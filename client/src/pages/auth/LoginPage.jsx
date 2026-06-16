@@ -44,7 +44,7 @@ export default function LoginPage() {
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
                 <span className="text-white font-bold text-sm">DF</span>
               </div>
-              <span className="font-bold text-xl text-gray-900">DesignFlow</span>
+              <span className="font-bold text-xl text-gray-900">Templyn</span>
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">مرحباً بعودتك</h1>
             <p className="text-gray-500 mt-2">سجل دخولك للمتابعة</p>
@@ -73,7 +73,7 @@ export default function LoginPage() {
         <div className="text-white text-center space-y-6">
           <div className="w-32 h-32 mx-auto opacity-20 rounded-full bg-white" />
           <h2 className="text-3xl font-bold">منصتك الإبداعية</h2>
-          <p className="text-white/70 text-lg">آلاف العملاء يثقون في DesignFlow</p>
+          <p className="text-white/70 text-lg">آلاف العملاء يثقون في Templyn</p>
         </div>
       </div>
     </div>

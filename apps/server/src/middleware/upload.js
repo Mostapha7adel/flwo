@@ -13,11 +13,15 @@ const MAGIC_BYTES = {
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const uploadsDir = path.resolve(__dirname, '../../uploads')
+
+const PERSISTENT_DIR = '/data/uploads'
+const uploadsDir = fs.existsSync('/data') ? PERSISTENT_DIR : path.resolve(__dirname, '../../uploads')
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
 }
+
+console.log(`📁 Uploads directory: ${uploadsDir}`)
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const ALLOWED_MEDIA_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm']

@@ -20,6 +20,7 @@ export default function AdminLoginPage() {
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(loginSchema),
+    defaultValues: { email: 'admin@templyn.com', password: 'Admin@123' },
   })
 
   const onSubmit = async (data) => {

@@ -62,6 +62,9 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
+if (fs.existsSync('/data/uploads')) {
+  app.use('/uploads', express.static('/data/uploads'))
+}
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')))
 
 const clientDist = path.resolve(__dirname, '../../../client/dist')

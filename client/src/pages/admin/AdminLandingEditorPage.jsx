@@ -24,7 +24,7 @@ export default function AdminLandingEditorPage() {
   const [gradientTo, setGradientTo] = useState('to-accent-500/20')
   const [animation, setAnimation] = useState('float')
 
-  const [aboutTitle, setAboutTitle] = useState('نبذة عن DesignFlow')
+  const [aboutTitle, setAboutTitle] = useState('نبذة عن Templyn')
   const [aboutDesc, setAboutDesc] = useState('')
   const [aboutStats, setAboutStats] = useState([
     { num: '500+', label: 'موقع منشور' },
@@ -33,7 +33,7 @@ export default function AdminLandingEditorPage() {
     { num: '24/7', label: 'دعم فني' },
   ])
 
-  const [aboutPageTitle, setAboutPageTitle] = useState('عن DesignFlow')
+  const [aboutPageTitle, setAboutPageTitle] = useState('عن Templyn')
   const [aboutPageDesc, setAboutPageDesc] = useState('')
   const [aboutStory, setAboutStory] = useState('')
   const [aboutPageImage, setAboutPageImage] = useState('')
@@ -73,12 +73,12 @@ export default function AdminLandingEditorPage() {
       setAnimation(data.heroSettings.animation || 'float')
     }
     if (data.about) {
-      setAboutTitle(data.about.title || 'نبذة عن DesignFlow')
+      setAboutTitle(data.about.title || 'نبذة عن Templyn')
       setAboutDesc(data.about.description || '')
       setAboutStats(data.about.stats || [])
     }
     if (data.aboutPage) {
-      setAboutPageTitle(data.aboutPage.title || 'عن DesignFlow')
+      setAboutPageTitle(data.aboutPage.title || 'عن Templyn')
       setAboutPageDesc(data.aboutPage.description || '')
       setAboutStory(data.aboutPage.story || '')
       setAboutPageImage(data.aboutPage.imageUrl || '')

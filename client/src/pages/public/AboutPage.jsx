@@ -16,7 +16,7 @@ export default function AboutPage() {
   const aboutPage = content?.aboutPage || {}
   const about = content?.about || {}
 
-  const pageTitle = aboutPage.title || 'عن DesignFlow'
+  const pageTitle = aboutPage.title || 'عن Templyn'
   const pageDesc = aboutPage.description || 'منصة رائدة في مجال تصميم وتطوير القوالب الإلكترونية. نؤمن بأن كل فكرة تستحق موقعاً احترافياً، ونسعى لتوفير أقصر الطرق لتحويل أفكارك إلى مواقع جاهزة بكل سهولة.'
   const story = aboutPage.story
   const imageUrl = aboutPage.imageUrl
@@ -57,7 +57,7 @@ export default function AboutPage() {
                   <p className="text-gray-500 leading-relaxed">
                     بدأنا رحلتنا عندما لاحظنا أن أصحاب المشاريع والشركات الناشئة يواجهون صعوبة في الحصول
                     على مواقع إلكترونية احترافية بتكلفة معقولة. فكرنا في حل يجمع بين الجودة العالية والسرعة
-                    في التسليم، وكانت DesignFlow هي النتيجة.
+                    في التسليم، وكانت Templyn هي النتيجة.
                   </p>
                   <p className="text-gray-500 leading-relaxed">
                     نقدم اليوم مئات القوالب الاحترافية القابلة للتخصيص بالكامل، مع فريق دعم فني متخصص
@@ -90,7 +90,7 @@ export default function AboutPage() {
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">لماذا DesignFlow؟</h2>
+            <h2 className="text-3xl font-bold text-gray-900">لماذا Templyn؟</h2>
             <p className="text-gray-500 mt-2">نقدم لك كل ما تحتاجه لبناء موقع احترافي</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

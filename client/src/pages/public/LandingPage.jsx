@@ -191,7 +191,7 @@ function TemplatesPreviewSection() {
 function AboutPreviewSection({ content }) {
   const navigate = useNavigate()
   const about = content?.about || {}
-  const title = about.title || 'نبذة عن DesignFlow'
+  const title = about.title || 'نبذة عن Templyn'
   const description = about.description || 'نحن منصة تصميم احترافية نساعدك على تحويل فكرتك إلى موقع إلكتروني متكامل في أسرع وقت.'
   const stats = about.stats || [
     { num: '500+', label: 'موقع منشور' },

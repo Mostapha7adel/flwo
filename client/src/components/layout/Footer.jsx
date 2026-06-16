@@ -25,7 +25,7 @@ export function Footer() {
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
                 <span className="text-white font-bold text-sm">DF</span>
               </div>
-              <span className="font-bold text-xl text-white">DesignFlow</span>
+              <span className="font-bold text-xl text-white">Templyn</span>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
               منصة تصميم احترافية تقدم قوالب جاهزة للتخصيص. حول فكرتك إلى موقع إلكتروني في دقائق.
@@ -36,7 +36,7 @@ export function Footer() {
             <h4 className="font-bold text-white mb-4">روابط سريعة</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/templates" className="hover:text-brand-400 transition">القوالب</Link></li>
-              <li><Link to="/about" className="hover:text-brand-400 transition">عن DesignFlow</Link></li>
+              <li><Link to="/about" className="hover:text-brand-400 transition">عن Templyn</Link></li>
               <li><Link to="/contact" className="hover:text-brand-400 transition">تواصل معنا</Link></li>
             </ul>
           </div>
@@ -78,7 +78,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} DesignFlow. جميع الحقوق محفوظة.
+          &copy; {new Date().getFullYear()} Templyn. جميع الحقوق محفوظة.
         </div>
       </div>
     </footer>
