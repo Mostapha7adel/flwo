@@ -72,7 +72,7 @@ if (fs.existsSync(path.join(clientDist, 'index.html'))) {
   console.warn('⚠️  Client build not found at', clientDist)
 }
 
-app.use(generalLimiter)
+app.use('/api', generalLimiter)
 
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)

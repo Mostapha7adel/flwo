@@ -52,6 +52,7 @@ async function bootstrap() {
     },
     pingTimeout: 60000,
     pingInterval: 25000,
+    transports: ['websocket', 'polling'],
   })
 
   io.use(async (socket, next) => {
