@@ -1,12 +1,13 @@
 import nodemailer from 'nodemailer'
 import { config } from '../config/index.js'
+import { logger } from './logger.js'
 
 let transporter = null
 
 function getTransporter() {
   if (transporter) return transporter
   if (!config.SMTP_HOST || !config.SMTP_USER || !config.SMTP_PASS) {
-    console.warn('⚠️ SMTP not configured - email sending disabled')
+    logger.warn('SMTP not configured - email sending disabled')
     return null
   }
   transporter = nodemailer.createTransport({
@@ -25,7 +26,7 @@ export async function sendEmail({ to, subject, html }) {
     await t.sendMail({ from: config.MAIL_FROM, to, subject, html })
     return true
   } catch (err) {
-    console.error('❌ Email send failed:', err.message)
+    logger.error(err, 'Email send failed')
     return false
   }
 }

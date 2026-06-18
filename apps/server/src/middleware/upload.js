@@ -3,6 +3,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { AppError } from '../lib/AppError.js'
+import { logger } from '../lib/logger.js'
 
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.mp4', '.webm']
 const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
@@ -31,17 +32,17 @@ if (uploadsDir === PERSISTENT_DIR && fs.existsSync(LOCAL_DIR)) {
         fs.cpSync(src, dst, { recursive: true })
       }
     }
-    console.log('📦 Migrated existing uploads to /data/uploads')
-  } catch (e) {
-    console.warn('⚠️ Could not migrate uploads:', e.message)
-  }
+      logger.info('Migrated existing uploads to /data/uploads')
+    } catch (e) {
+      logger.warn(e, 'Could not migrate uploads')
+    }
 }
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
 }
 
-console.log(`📁 Uploads directory: ${uploadsDir}`)
+logger.info('Uploads directory: %s', uploadsDir)
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const ALLOWED_MEDIA_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm']

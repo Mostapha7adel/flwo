@@ -1,10 +1,11 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { logger } from '../src/lib/logger.js'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🌱 Seeding database...')
+  logger.info('Seeding database...')
 
   const adminPassword = await bcrypt.hash('Admin@123', 12)
 
@@ -21,7 +22,7 @@ async function main() {
       isActive: true,
     },
   })
-  console.log('✅ Admin created:', admin.email)
+  logger.info('Admin created: %s', admin.email)
 
   const templates = [
     {
@@ -127,16 +128,16 @@ async function main() {
           isPublished: true,
         },
       })
-      console.log(`✅ Template: ${tpl.title}`)
+      logger.info('Template: %s', tpl.title)
     }
   }
 
-  console.log('🎉 Seeding complete!')
+  logger.info('Seeding complete!')
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed error:', e)
+    logger.error(e, 'Seed error')
     process.exit(1)
   })
   .finally(async () => {

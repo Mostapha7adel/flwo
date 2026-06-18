@@ -41,6 +41,7 @@ model User {
   isActive     Boolean   @default(true)
   isVIP        Boolean   @default(false)
   bannedUntil  DateTime?
+  deletedAt    DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -85,6 +86,7 @@ model Template {
   defaultColors Json
   components    Json
   sortOrder     Int      @default(0)
+  deletedAt     DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -132,6 +134,7 @@ model Conversation {
   type      String   @default("ORDER")
   title     String?  @db.VarChar(200)
   isOpen    Boolean  @default(true)
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -221,6 +224,7 @@ model Expense {
   date        DateTime @default(now())
   notes       String?  @db.Text
   createdBy   String   @db.VarChar(100)
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

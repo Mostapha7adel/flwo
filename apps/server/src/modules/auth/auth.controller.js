@@ -1,3 +1,4 @@
+import { success, created } from '../../lib/response.js'
 import * as authService from './auth.service.js'
 import { config } from '../../config/index.js'
 import { toPublicUrl } from '../../middleware/upload.js'
@@ -24,7 +25,7 @@ export async function register(req, res, next) {
     const avatarUrl = toPublicUrl(req.file?.path) || null
     const { user, accessToken, refreshToken } = await authService.registerUser(req.validatedData, avatarUrl)
     res.cookie('refresh_token', refreshToken, REFRESH_COOKIE_OPTIONS)
-    res.status(201).json({ user, accessToken })
+    created(res, { user, accessToken })
   } catch (err) { next(err) }
 }
 
@@ -34,7 +35,7 @@ export async function login(req, res, next) {
     const result = await authService.loginUser(email, password)
     const cookieName = result.user.role !== 'CLIENT' ? 'admin_refresh_token' : 'refresh_token'
     res.cookie(cookieName, result.refreshToken, REFRESH_COOKIE_OPTIONS)
-    res.json({ user: result.user, accessToken: result.accessToken })
+    success(res, { user: result.user, accessToken: result.accessToken })
   } catch (err) { next(err) }
 }
 
@@ -58,7 +59,7 @@ export async function refresh(req, res, next) {
 
     const cookieName = isAdmin ? 'admin_refresh_token' : 'refresh_token'
     res.cookie(cookieName, refreshToken, REFRESH_COOKIE_OPTIONS)
-    res.json({ user, accessToken })
+    success(res, { user, accessToken })
   } catch (err) { next(err) }
 }
 
@@ -68,7 +69,7 @@ export async function logout(req, res, next) {
     await authService.logoutUser(req.user.id, accessToken)
     const isAdmin = req.user.role !== 'CLIENT'
     res.clearCookie(isAdmin ? 'admin_refresh_token' : 'refresh_token', { path: '/api/auth/refresh' })
-    res.json({ message: 'تم تسجيل الخروج بنجاح' })
+    success(res, null, 'تم تسجيل الخروج بنجاح')
   } catch (err) { next(err) }
 }
 
@@ -76,10 +77,10 @@ export async function changePassword(req, res, next) {
   try {
     const { currentPassword, newPassword } = req.validatedData
     await authService.changeUserPassword(req.user.id, currentPassword, newPassword)
-    res.json({ message: 'تم تغيير كلمة المرور بنجاح' })
+    success(res, null, 'تم تغيير كلمة المرور بنجاح')
   } catch (err) { next(err) }
 }
 
 export async function getMe(req, res) {
-  res.json({ user: req.user })
+  success(res, { user: req.user })
 }

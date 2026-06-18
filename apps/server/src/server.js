@@ -7,36 +7,37 @@ import { prisma } from './config/database.js'
 import { redis, safeRedis } from './config/redis.js'
 import { setupChatSocket } from './modules/chat/chat.socket.js'
 import { verifySocketToken } from './lib/jwt.js'
+import { logger } from './lib/logger.js'
 
 async function bootstrap() {
   try { await redis.connect() } catch {}
 
   try {
     await redis.ping()
-    console.log('✅ Redis connected')
+    logger.info('Redis connected')
   } catch {
-    console.warn('⚠️  Redis unavailable, running without cache')
+    logger.warn('Redis unavailable, running without cache')
   }
 
   try {
     await prisma.$connect()
-    console.log('✅ Database connected')
+    logger.info('Database connected')
   } catch (err) {
-    console.error('❌ Database connection failed:', err)
+    logger.fatal(err, 'Database connection failed')
     process.exit(1)
   }
 
   try {
-    console.log('📦 Running database migrations...')
+    logger.info('Running database migrations...')
     execSync('npx prisma migrate deploy', { stdio: 'inherit', cwd: process.cwd() })
-    console.log('✅ Database schema synced')
+    logger.info('Database schema synced')
   } catch (err) {
-    console.warn('⚠️  Migrate deploy failed, trying db push...')
+    logger.warn(err, 'Migrate deploy failed, trying db push...')
     try {
       execSync('npx prisma db push --skip-generate', { stdio: 'inherit', cwd: process.cwd() })
-      console.log('✅ Database schema synced via push')
+      logger.info('Database schema synced via push')
     } catch (err2) {
-      console.error('❌ Database migration failed:', err2)
+      logger.fatal(err2, 'Database migration failed')
       process.exit(1)
     }
   }
@@ -67,12 +68,11 @@ async function bootstrap() {
   app.set('io', io)
 
   server.listen(config.PORT, () => {
-    console.log(`🚀 Server running on port ${config.PORT}`)
-    console.log(`🌍 Environment: ${config.NODE_ENV}`)
+    logger.info({ port: config.PORT, env: config.NODE_ENV }, 'Server started')
   })
 
   const shutdown = async () => {
-    console.log('\n🛑 Shutting down gracefully...')
+    logger.info('Shutting down gracefully...')
     io.close()
     server.close()
     await prisma.$disconnect()

@@ -1,3 +1,4 @@
+import { success } from '../../lib/response.js'
 import { prisma } from '../../config/database.js'
 import * as landingService from './landing.service.js'
 
@@ -14,7 +15,7 @@ export async function getHome(req, res, next) {
       prisma.user.count({ where: { role: 'CLIENT' } }),
       prisma.order.count(),
     ])
-    res.json({
+    success(res, {
       featuredTemplates,
       stats: { templates: templatesCount, clients: clientsCount, projects: projectsCount }
     })
@@ -24,7 +25,7 @@ export async function getHome(req, res, next) {
 export async function getContent(req, res, next) {
   try {
     const data = await landingService.getAllSections()
-    res.json(data)
+    success(res, data)
   } catch (err) { next(err) }
 }
 
@@ -35,7 +36,7 @@ export async function getCategories(req, res, next) {
       _count: true,
       where: { isPublished: true }
     })
-    res.json({
+    success(res, {
       categories: categories.map(c => ({ name: c.category, count: c._count }))
     })
   } catch (err) { next(err) }

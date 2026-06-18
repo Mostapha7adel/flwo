@@ -1,5 +1,6 @@
 import Redis from 'ioredis'
 import { config } from './index.js'
+import { logger } from '../lib/logger.js'
 
 const redis = new Redis(config.REDIS_URL, {
   password: process.env.REDIS_PASSWORD || undefined,
@@ -9,10 +10,10 @@ const redis = new Redis(config.REDIS_URL, {
   lazyConnect: true,
 })
 
-redis.on('connect', () => console.log('✅ Redis connected'))
+redis.on('connect', () => logger.info('Redis connected'))
 redis.on('error', (err) => {
   if (err.code !== 'ECONNREFUSED') {
-    console.error('❌ Redis error:', err)
+    logger.error(err, 'Redis error')
   }
 })
 

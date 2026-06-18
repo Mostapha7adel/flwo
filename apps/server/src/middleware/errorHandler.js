@@ -1,12 +1,9 @@
 import { Prisma } from '@prisma/client'
+import { logger } from '../lib/logger.js'
 
 export function errorHandler(err, req, res, next) {
   if (!err.isOperational) {
-    if (process.env.NODE_ENV === 'production') {
-      console.error('💥 CRITICAL ERROR:', err.message)
-    } else {
-      console.error('💥 CRITICAL ERROR:', err)
-    }
+    logger.error(err, 'Unhandled error')
   }
 
   let statusCode = 500

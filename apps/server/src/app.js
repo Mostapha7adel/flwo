@@ -2,7 +2,6 @@ import express, { Router } from 'express'
 import compression from 'compression'
 import cors from 'cors'
 import helmet from 'helmet'
-import morgan from 'morgan'
 import cookieParser from 'cookie-parser'
 import path from 'path'
 import fs from 'fs'
@@ -10,6 +9,8 @@ import { fileURLToPath } from 'url'
 import { config } from './config/index.js'
 import { generalLimiter } from './middleware/rateLimiter.js'
 import { errorHandler } from './middleware/errorHandler.js'
+import { logger, requestLogger } from './lib/logger.js'
+import { csrfProtection, csrfTokenMiddleware } from './middleware/csrf.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -64,10 +65,12 @@ app.use(cors({
   },
   credentials: true,
 }))
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
+app.use(requestLogger())
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
+
+app.get('/api/csrf-token', csrfTokenMiddleware)
 
 if (fs.existsSync('/data/uploads')) {
   app.use('/uploads', express.static('/data/uploads'))
@@ -77,9 +80,9 @@ app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')))
 const clientDist = path.resolve(__dirname, '../../../client/dist')
 if (fs.existsSync(path.join(clientDist, 'index.html'))) {
   app.use(express.static(clientDist))
-  console.log('✅ Serving React client from', clientDist)
+  logger.info('Serving React client from %s', clientDist)
 } else {
-  console.warn('⚠️  Client build not found at', clientDist)
+  logger.warn('Client build not found at %s', clientDist)
 }
 
 app.use('/api', generalLimiter)

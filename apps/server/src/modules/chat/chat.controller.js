@@ -1,3 +1,4 @@
+import { success, created, paginated } from '../../lib/response.js'
 import * as chatService from './chat.service.js'
 import { getPagination } from '../../lib/pagination.js'
 import { createNotification } from '../notifications/notifications.service.js'
@@ -9,7 +10,7 @@ export async function getConversation(req, res, next) {
   try {
     const orderId = req.validatedData.orderId
     const conversation = await chatService.getOrCreateConversation(orderId, req.user.id)
-    res.json(conversation)
+    success(res, conversation)
   } catch (err) { next(err) }
 }
 
@@ -21,10 +22,10 @@ export async function getDirectConversation(req, res, next) {
       select: { id: true, firstName: true, lastName: true, email: true, role: true }
     })
     if (!client || client.role !== 'CLIENT') {
-      return res.status(404).json({ message: 'العميل غير موجود' })
+      return success(res, null, 'العميل غير موجود', 404)
     }
     const conversation = await chatService.createDirectConversation(clientId)
-    res.json({ conversation, client })
+    success(res, { conversation, client })
   } catch (err) { next(err) }
 }
 
@@ -36,17 +37,17 @@ export async function createDirectConversation(req, res, next) {
       select: { id: true, firstName: true, lastName: true, email: true, role: true }
     })
     if (!client || client.role !== 'CLIENT') {
-      return res.status(404).json({ message: 'العميل غير موجود' })
+      return success(res, null, 'العميل غير موجود', 404)
     }
     const conversation = await chatService.createDirectConversation(clientId, title)
-    res.json({ conversation, client })
+    success(res, { conversation, client })
   } catch (err) { next(err) }
 }
 
 export async function getClientConversations(req, res, next) {
   try {
     const conversations = await chatService.getClientConversations(req.user.id)
-    res.json({ conversations })
+    success(res, { conversations })
   } catch (err) { next(err) }
 }
 
@@ -109,7 +110,7 @@ export async function sendMessage(req, res, next) {
       }
     } catch (_) {}
 
-    res.status(201).json(message)
+    created(res, message)
   } catch (err) { next(err) }
 }
 
@@ -122,6 +123,6 @@ export async function getMessages(req, res, next) {
       req.user.role,
       { page, limit }
     )
-    res.json(result)
+    paginated(res, result.messages, result.total, result.page, limit)
   } catch (err) { next(err) }
 }

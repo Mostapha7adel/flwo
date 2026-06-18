@@ -1,3 +1,5 @@
+import { success, created, paginated } from '../../lib/response.js'
+import { logger } from '../../lib/logger.js'
 import { Router } from 'express'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
@@ -45,7 +47,7 @@ router.post('/login', adminLoginLimiter, validate(loginSchema), async (req, res,
       httpOnly: true, secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 7 * 24 * 60 * 60 * 1000, path: '/api/auth/refresh'
     })
-    res.json({ user: safeUser, accessToken })
+    success(res, { user: safeUser, accessToken })
   } catch (err) { next(err) }
 })
 
@@ -76,7 +78,7 @@ router.get('/users', async (req, res, next) => {
       ])
       return { ...u, completedOrders: completed, cancelledOrders: cancelled, totalOrders }
     }))
-    res.json({ users: usersWithStats, total, page, totalPages: Math.ceil(total / limit) })
+    paginated(res, usersWithStats, total, page, limit)
   } catch (err) { next(err) }
 })
 
@@ -97,7 +99,7 @@ router.patch('/users/:id/status', validate(userStatusSchema), async (req, res, n
       data: { isActive },
       select: SAFE_USER_SELECT
     })
-    res.json({ user, message: isActive ? 'تم تفعيل الحساب' : 'تم إيقاف الحساب' })
+    success(res, { user }, isActive ? 'تم تفعيل الحساب' : 'تم إيقاف الحساب')
   } catch (err) { next(err) }
 })
 
@@ -121,7 +123,7 @@ router.patch('/users/:id/role', validate(userRoleSchema), async (req, res, next)
       data: { role },
       select: SAFE_USER_SELECT
     })
-    res.json({ user })
+    success(res, { user })
   } catch (err) { next(err) }
 })
 
@@ -137,7 +139,7 @@ router.patch('/users/:id/ban', validate(banUserSchema), async (req, res, next) =
       data: { bannedUntil: bannedUntil ? new Date(bannedUntil) : null },
       select: { ...SAFE_USER_SELECT, isVIP: true, bannedUntil: true }
     })
-    res.json({ user, message: bannedUntil ? 'تم حظر المستخدم' : 'تم إلغاء الحظر' })
+    success(res, { user }, bannedUntil ? 'تم حظر المستخدم' : 'تم إلغاء الحظر')
   } catch (err) { next(err) }
 })
 
@@ -153,7 +155,7 @@ router.patch('/users/:id/vip', validate(setVipSchema), async (req, res, next) =>
       data: { isVIP },
       select: { ...SAFE_USER_SELECT, isVIP: true, bannedUntil: true }
     })
-    res.json({ user, message: isVIP ? 'تم تعيين المستخدم كمميز' : 'تم إلغاء التميز' })
+    success(res, { user }, isVIP ? 'تم تعيين المستخدم كمميز' : 'تم إلغاء التميز')
   } catch (err) { next(err) }
 })
 
@@ -171,7 +173,7 @@ router.get('/accounts', async (req, res, next) => {
       }),
       prisma.user.count({ where: { role: { in: staffRoles } } }),
     ])
-    res.json({ accounts: users, total, page, totalPages: Math.ceil(total / limit) })
+    paginated(res, users, total, page, limit)
   } catch (err) { next(err) }
 })
 
@@ -189,7 +191,7 @@ router.post('/accounts', requireAdmin, validate(createAccountSchema), async (req
       data: { firstName, lastName, email: email.toLowerCase(), phone, passwordHash, role, isActive: true },
       select: SAFE_USER_SELECT,
     })
-    res.status(201).json({ user, message: 'تم إنشاء الحساب بنجاح' })
+    created(res, { user }, 'تم إنشاء الحساب بنجاح')
   } catch (err) { next(err) }
 })
 
@@ -206,7 +208,7 @@ router.patch('/accounts/:id/status', requireAdmin, async (req, res, next) => {
       data: { isActive },
       select: SAFE_USER_SELECT,
     })
-    res.json({ user, message: isActive ? 'تم تفعيل الحساب' : 'تم إيقاف الحساب' })
+    success(res, { user }, isActive ? 'تم تفعيل الحساب' : 'تم إيقاف الحساب')
   } catch (err) { next(err) }
 })
 
@@ -226,7 +228,7 @@ router.patch('/accounts/:id/role', requireAdmin, async (req, res, next) => {
       data: { role },
       select: SAFE_USER_SELECT,
     })
-    res.json({ user, message: 'تم تغيير الدور بنجاح' })
+    success(res, { user }, 'تم تغيير الدور بنجاح')
   } catch (err) { next(err) }
 })
 
@@ -246,7 +248,7 @@ router.delete('/accounts/:id', requireAdmin, async (req, res, next) => {
     } catch (e) {
       await prisma.user.update({ where: { id: req.params.id }, data: { isActive: false, email: `deleted-${Date.now()}@deleted.com` } })
     }
-    res.json({ message: 'تم حذف الحساب' })
+    success(res, null, 'تم حذف الحساب')
   } catch (err) { next(err) }
 })
 
@@ -268,7 +270,7 @@ router.get('/orders', async (req, res, next) => {
       }),
       prisma.order.count({ where })
     ])
-    res.json({ orders, total, page, totalPages: Math.ceil(total / limit) })
+    paginated(res, orders, total, page, limit)
   } catch (err) { next(err) }
 })
 
@@ -280,7 +282,7 @@ router.patch('/orders/:id/status', validate(orderStatusSchema), async (req, res,
       data: { status },
       select: { id: true, status: true, orderNumber: true, updatedAt: true }
     })
-    res.json(order)
+    success(res, order)
   } catch (err) { next(err) }
 })
 
@@ -295,7 +297,7 @@ router.get('/stats', async (req, res, next) => {
         _count: true,
       })
     ])
-    res.json({
+    success(res, {
       users: usersCount,
       orders: ordersCount,
       templates: templatesCount,
@@ -317,7 +319,7 @@ router.get('/orders/:id', async (req, res, next) => {
       }
     })
     if (!order) throw new AppError('الطلب غير موجود', 404, 'ORDER_NOT_FOUND')
-    res.json(order)
+    success(res, order)
   } catch (err) { next(err) }
 })
 
@@ -347,18 +349,18 @@ router.put('/landing', validate(z.object({}).passthrough()), async (req, res, ne
           update: { content: parsed.data },
         }))
       } catch (e) {
-        console.warn(`⚠️ Skipping invalid section "${section}":`, e.message)
+        logger.warn('Skipping invalid section "%s": %s', section, e.message)
       }
     }
     if (ops.length) await prisma.$transaction(ops)
-    res.json({ message: 'تم حفظ التغييرات بنجاح' })
+    success(res, null, 'تم حفظ التغييرات بنجاح')
   } catch (err) { next(err) }
 })
 
 router.post('/upload/media', uploadLimiter, uploadMedia, validateFileContent, (req, res, next) => {
   try {
     if (!req.file) throw new AppError('الملف مطلوب', 400, 'FILE_REQUIRED')
-    res.json({ url: toPublicUrl(req.file.path), name: req.file.filename })
+    success(res, { url: toPublicUrl(req.file.path), name: req.file.filename })
   } catch (err) { next(err) }
 })
 
@@ -370,7 +372,7 @@ router.put('/site', async (req, res, next) => {
       create: { section: 'site', content: { logoUrl: logoUrl || '' } },
       update: { content: { logoUrl: logoUrl || '' } },
     })
-    res.json({ message: 'تم حفظ الشعار' })
+    success(res, null, 'تم حفظ الشعار')
   } catch (err) { next(err) }
 })
 
@@ -390,7 +392,7 @@ router.get('/orders/:id/conversation', async (req, res, next) => {
         }
       })
     }
-    res.json(conversation)
+    success(res, conversation)
   } catch (err) { next(err) }
 })
 
@@ -416,7 +418,7 @@ router.get('/conversations', async (req, res, next) => {
       }),
       prisma.conversation.count()
     ])
-    res.json({ conversations, total, page, totalPages: Math.ceil(total / limit) })
+    paginated(res, conversations, total, page, limit)
   } catch (err) { next(err) }
 })
 
@@ -448,7 +450,7 @@ router.get('/accounts/summary', async (req, res, next) => {
     const pendingRevenue = Number(pendingOrders._sum.totalAmount || 0)
     const totalExpense = Number(totalExpenses._sum.amount || 0)
 
-    res.json({
+    success(res, {
       totalRevenue,
       totalExpenses: totalExpense,
       netProfit: totalRevenue - totalExpense,
@@ -492,7 +494,7 @@ router.get('/accounts/expenses', async (req, res, next) => {
 
     const totalAmount = await prisma.expense.aggregate({ _sum: { amount: true }, where })
 
-    res.json({
+    success(res, {
       expenses: expenses.map(e => ({ ...e, amount: Number(e.amount) })),
       total,
       page,
@@ -521,7 +523,7 @@ router.post('/accounts/expenses', validate(z.object({
         createdBy: req.user.firstName + ' ' + req.user.lastName,
       },
     })
-    res.json({ ...expense, amount: Number(expense.amount) })
+    success(res, { ...expense, amount: Number(expense.amount) })
   } catch (err) { next(err) }
 })
 
@@ -545,14 +547,14 @@ router.put('/accounts/expenses/:id', validate(z.object({
       where: { id: req.params.id },
       data: updateData,
     })
-    res.json({ ...expense, amount: Number(expense.amount) })
+    success(res, { ...expense, amount: Number(expense.amount) })
   } catch (err) { next(err) }
 })
 
 router.delete('/accounts/expenses/:id', async (req, res, next) => {
   try {
     await prisma.expense.delete({ where: { id: req.params.id } })
-    res.json({ message: 'تم حذف المصروف' })
+    success(res, null, 'تم حذف المصروف')
   } catch (err) { next(err) }
 })
 
@@ -570,7 +572,7 @@ router.get('/accounts/revenue-history', async (req, res, next) => {
       ORDER BY month DESC
       LIMIT 12
     `
-    res.json(months)
+    success(res, months)
   } catch (err) { next(err) }
 })
 router.patch('/contact/:id/read', contactCtrl.adminToggleRead)
