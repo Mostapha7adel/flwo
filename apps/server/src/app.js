@@ -23,6 +23,9 @@ import landingRoutes from './modules/landing/landing.routes.js'
 import contactRoutes from './modules/contact/contact.routes.js'
 import adminRoutes from './modules/admin/admin.routes.js'
 import notificationRoutes from './modules/notifications/notifications.routes.js'
+import versionRoutes from './modules/versions/versions.routes.js'
+import serverRoutes from './modules/servers/servers.routes.js'
+import deploymentRoutes from './modules/deployments/deployments.routes.js'
 
 const app = express()
 
@@ -96,6 +99,9 @@ API_V1.use('/chat', chatRoutes)
 API_V1.use('/landing', landingRoutes)
 API_V1.use('/contact', contactRoutes)
 API_V1.use('/notifications', notificationRoutes)
+API_V1.use('/templates', versionRoutes)
+API_V1.use('/servers', serverRoutes)
+API_V1.use('/orders', deploymentRoutes)
 API_V1.use(`/${config.ADMIN_ROUTE_HINT}`, adminRoutes)
 
 API_V1.get('/health', (req, res) => {

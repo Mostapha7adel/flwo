@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ShoppingBag, MessageCircle, User, LogOut, X, Globe } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, MessageCircle, User, LogOut, X, Globe, Server, Rocket } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { Avatar } from '../ui/Avatar'
 import { cn } from '../../utils/cn'
@@ -8,6 +8,7 @@ const links = [
   { to: '/', icon: Globe, label: 'الصفحة الرئيسية' },
   { to: '/dashboard', icon: LayoutDashboard, label: 'نظرة عامة', end: true },
   { to: '/dashboard/orders', icon: ShoppingBag, label: 'طلباتي' },
+  { to: '/dashboard/servers', icon: Server, label: 'السيرفرات' },
   { to: '/dashboard/chat', icon: MessageCircle, label: 'المحادثة' },
   { to: '/dashboard/profile', icon: User, label: 'الملف الشخصي' },
 ]

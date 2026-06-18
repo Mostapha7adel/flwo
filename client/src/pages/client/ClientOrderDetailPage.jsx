@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowRight, MessageCircle, Loader } from 'lucide-react'
+import { ArrowRight, MessageCircle, Loader, Rocket } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../../components/ui/Button'
 import { OrderStatusBadge } from '../../components/shared/OrderStatusBadge'
@@ -152,10 +152,18 @@ export default function ClientOrderDetailPage() {
           </div>
 
           {['ACCEPTED', 'IN_PROGRESS', 'COMPLETED'].includes(order.status) && (
-            <Button variant="accent" className="w-full" onClick={() => navigate('/dashboard/chat')}>
-              <MessageCircle className="w-5 h-5" />
-              فتح المحادثة
-            </Button>
+            <>
+              <Button variant="accent" className="w-full" onClick={() => navigate('/dashboard/chat')}>
+                <MessageCircle className="w-5 h-5" />
+                فتح المحادثة
+              </Button>
+              {order.status !== 'ACCEPTED' && (
+                <Button variant="primary" className="w-full" onClick={() => navigate(`/dashboard/orders/${order.id}/deploy`)}>
+                  <Rocket className="w-5 h-5" />
+                  نشر المشروع
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>

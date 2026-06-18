@@ -17,12 +17,22 @@ let isRefreshing = false
 let failedQueue = []
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const body = response.data
+    if (body?.success === true) {
+      response.data = body.data !== null && body.data !== undefined ? body.data : body.meta || body.message
+      response.total = body.meta?.total
+      response.page = body.meta?.page
+      response.limit = body.meta?.limit
+      response.totalPages = body.meta?.totalPages
+    }
+    return response
+  },
   async (error) => {
     const original = error.config
 
     // Silently handle 401 for refresh endpoint
-    if (original?.url === '/auth/refresh') {
+    if (original?.url === '/auth/refresh' || original?.url === '/v1/auth/refresh') {
       return Promise.resolve(error.response)
     }
 

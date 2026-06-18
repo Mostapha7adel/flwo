@@ -29,6 +29,28 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum DeploymentType {
+  DOWNLOAD
+  MANUAL
+  AUTO_SSH
+  AUTO_DOCKER
+  AUTO_GIT
+}
+
+enum DeploymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+enum SubscriptionTier {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
 model User {
   id           String   @id @default(cuid())
   firstName    String   @db.VarChar(50)
@@ -50,6 +72,8 @@ model User {
   refreshTokens RefreshToken[]
   notifications Notification[]
   directConversations Conversation[] @relation("DirectConversations")
+  servers       Server[]
+  subscription Subscription?
 
   @@index([email])
   @@index([phone])
@@ -85,12 +109,20 @@ model Template {
   isPublished   Boolean  @default(false)
   defaultColors Json
   components    Json
+  configSchema  Json?
+  gallery       String[]
+  videoUrl      String?
+  features      Json?
+  deploymentType String? @db.VarChar(20)
+  deploymentScript String? @db.Text
+  sourceUrl     String?  @db.Text
   sortOrder     Int      @default(0)
   deletedAt     DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  orders Order[]
+  orders  Order[]
+  versions TemplateVersion[]
 
   @@index([isPublished])
   @@index([category])
@@ -98,6 +130,22 @@ model Template {
   @@index([category, isPublished])
   @@index([createdAt])
   @@map("templates")
+}
+
+model TemplateVersion {
+  id         String   @id @default(cuid())
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  version    String   @db.VarChar(20)
+  changelog  String?  @db.Text
+  fileUrl    String   @db.Text
+  fileSize   Int      @default(0)
+  isCurrent  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@unique([templateId, version])
+  @@index([templateId])
+  @@map("template_versions")
 }
 
 model Order {
@@ -115,6 +163,7 @@ model Order {
   updatedAt     DateTime    @updatedAt
 
   conversation Conversation?
+  deployment   Deployment?
 
   @@index([userId])
   @@index([status])
@@ -214,6 +263,69 @@ model Notification {
   @@index([userId, isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model Server {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String   @db.VarChar(100)
+  host      String   @db.VarChar(255)
+  port      Int      @default(22)
+  username  String   @db.VarChar(100)
+  authType  String   @default("PASSWORD") @db.VarChar(20)
+  password  String?  @db.Text
+  sshKey    String?  @db.Text
+  domain    String?  @db.VarChar(255)
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deployments Deployment[]
+
+  @@index([userId])
+  @@map("servers")
+}
+
+model Deployment {
+  id              String           @id @default(cuid())
+  orderId         String           @unique
+  order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  serverId        String?
+  server          Server?          @relation(fields: [serverId], references: [id])
+  type            DeploymentType   @default(DOWNLOAD)
+  status          DeploymentStatus @default(PENDING)
+  domain          String?          @db.VarChar(255)
+  sslEnabled      Boolean          @default(false)
+  log             String?          @db.Text
+  deployedVersion String?          @db.VarChar(20)
+  completedAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([status])
+  @@index([serverId])
+  @@map("deployments")
+}
+
+model Subscription {
+  id              String           @id @default(cuid())
+  userId          String           @unique
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier            SubscriptionTier @default(FREE)
+  maxTemplates    Int              @default(1)
+  maxDeployments  Int              @default(0)
+  maxServers      Int              @default(0)
+  features        String[]
+  price           Decimal          @db.Decimal(10, 2)
+  startsAt        DateTime         @default(now())
+  expiresAt       DateTime?
+  autoRenew       Boolean          @default(false)
+  stripeId        String?          @db.VarChar(100)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("subscriptions")
 }
 
 model Expense {

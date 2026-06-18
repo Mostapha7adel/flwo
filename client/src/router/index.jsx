@@ -35,6 +35,9 @@ const AdminContactPage = lazy(() => import('../pages/admin/AdminContactPage'))
 const AdminUsersPage = lazy(() => import('../pages/admin/AdminUsersPage'))
 const AdminAccountsPage = lazy(() => import('../pages/admin/AdminAccountsPage'))
 const AdminAccountingPage = lazy(() => import('../pages/admin/AdminAccountingPage'))
+const AdminTemplateVersionsPage = lazy(() => import('../pages/admin/AdminTemplateVersionsPage'))
+const ClientServersPage = lazy(() => import('../pages/client/ClientServersPage'))
+const ClientDeploymentsPage = lazy(() => import('../pages/client/ClientDeploymentsPage'))
 
 const router = createBrowserRouter([
   {
@@ -63,6 +66,8 @@ const router = createBrowserRouter([
       { path: 'orders/:id', element: <PageTransition><ClientOrderDetailPage /></PageTransition> },
       { path: 'profile', element: <PageTransition><ClientProfilePage /></PageTransition> },
       { path: 'chat', element: <PageTransition><ClientChatPage /></PageTransition> },
+      { path: 'servers', element: <PageTransition><ClientServersPage /></PageTransition> },
+      { path: 'orders/:orderId/deploy', element: <PageTransition><ClientDeploymentsPage /></PageTransition> },
     ]
   },
 
@@ -93,6 +98,7 @@ const router = createBrowserRouter([
       { path: 'templates', element: <PageTransition><AdminTemplatesPage /></PageTransition> },
       { path: 'templates/new', element: <PageTransition><AddTemplatePage /></PageTransition> },
       { path: 'templates/edit/:id', element: <PageTransition><AddTemplatePage /></PageTransition> },
+      { path: 'templates/:templateId/versions', element: <PageTransition><AdminTemplateVersionsPage /></PageTransition> },
       { path: 'landing', element: <PageTransition><AdminLandingEditorPage /></PageTransition> },
       { path: 'chat', element: <PageTransition><AdminChatPage /></PageTransition> },
       { path: 'chat/:convId', element: <PageTransition><AdminChatPage /></PageTransition> },
