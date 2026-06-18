@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 const safeText = (max = 200) =>
-  z.string().min(1).max(max).regex(/^[^<>{}$`\\]*$/, 'HTML tags غير مسموح').transform(s => s.trim())
+  z.string().max(max).regex(/^[^<>{}$`\\]*$/, 'HTML tags غير مسموح').transform(s => s.trim()).optional().default('')
 
 const safeUrl = z.string().url('رابط غير صحيح').max(500).optional().or(z.literal(''))
 
