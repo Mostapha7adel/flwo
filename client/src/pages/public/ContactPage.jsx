@@ -7,6 +7,7 @@ import { api } from '../../lib/axios'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Textarea } from '../../components/ui/Textarea'
+import { useSiteSettings } from '../../hooks/useSiteSettings'
 
 const contactSchema = z.object({
   name: z.string().min(2, 'الاسم يجب أن يكون حرفين على الأقل'),
@@ -19,6 +20,11 @@ const contactSchema = z.object({
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' })
   const [errors, setErrors] = useState({})
+  const { data: content } = useSiteSettings()
+  const footer = content?.footer || {}
+  const contactEmail = footer.email || 'support@designflow.com'
+  const contactPhone = footer.phone || '+966 55 123 4567'
+  const contactAddress = footer.address || 'الرياض، المملكة العربية السعودية'
 
   const mutation = useMutation({
     mutationFn: (data) => api.post('/contact', data),
@@ -80,21 +86,21 @@ export default function ContactPage() {
                   <Mail className="w-6 h-6 text-brand-600" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">البريد الإلكتروني</h3>
-                <p className="text-sm text-gray-500">support@designflow.com</p>
+                <p className="text-sm text-gray-500" dir="ltr">{contactEmail}</p>
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
                 <div className="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center mx-auto mb-3">
                   <Phone className="w-6 h-6 text-brand-600" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">رقم الهاتف</h3>
-                <p className="text-sm text-gray-500">+966 55 123 4567</p>
+                <p className="text-sm text-gray-500" dir="ltr">{contactPhone}</p>
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
                 <div className="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center mx-auto mb-3">
                   <MapPin className="w-6 h-6 text-brand-600" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">العنوان</h3>
-                <p className="text-sm text-gray-500">الرياض، المملكة العربية السعودية</p>
+                <p className="text-sm text-gray-500">{contactAddress}</p>
               </div>
             </div>
 

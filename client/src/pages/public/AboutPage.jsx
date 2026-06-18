@@ -1,17 +1,13 @@
 import { useNavigate } from 'react-router-dom'
-import { Palette, Zap, Shield, MessageCircle, Smartphone, Infinity as InfinityIcon } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { Palette, Zap, Shield, MessageCircle, Smartphone, Infinity as InfinityIcon, Sparkles } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
-import { api } from '../../lib/axios'
+import { useSiteSettings } from '../../hooks/useSiteSettings'
+
+const ICON_MAP = { Palette, Zap, Shield, MessageCircle, Smartphone, Infinity: InfinityIcon, Sparkles, Star }
 
 export default function AboutPage() {
   const navigate = useNavigate()
-
-  const { data: content } = useQuery({
-    queryKey: ['about-content'],
-    queryFn: () => api.get('/landing/content').then(r => r.data),
-    staleTime: 300000,
-  })
+  const { data: content } = useSiteSettings()
 
   const aboutPage = content?.aboutPage || {}
   const about = content?.about || {}
@@ -25,14 +21,14 @@ export default function AboutPage() {
     { num: '50+', label: 'قالب احترافي' },
   ]
 
-  const features = [
-    { icon: Palette, title: 'تخصيص كامل', desc: 'اسحب وأفلت العناصر وغير الألوان لتحصل على تصميم فريد' },
-    { icon: Zap, title: 'تسليم سريع', desc: 'نسلم موقعك خلال 48 ساعة من تأكيد الطلب' },
-    { icon: Shield, title: 'أمان واحترافية', desc: 'أكواد نظيفة ومعايير أمان عالية لضمان جودة موقعك' },
-    { icon: MessageCircle, title: 'دعم فني متواصل', desc: 'فريق دعم متاح 24/7 لمساعدتك في أي استفسار' },
-    { icon: Smartphone, title: 'متجاوب مع الكل', desc: 'جميع قوالبنا متوافقة مع جميع الأجهزة والمتصفحات' },
-    { icon: InfinityIcon, title: 'تحديثات مجانية', desc: 'تحديثات مستمرة وتحسينات بدون أي رسوم إضافية' },
-  ]
+  const features = (content?.features || [
+    { icon: 'Palette', title: 'تخصيص كامل', description: 'اسحب وأفلت العناصر وغير الألوان لتحصل على تصميم فريد' },
+    { icon: 'Zap', title: 'تسليم سريع', description: 'نسلم موقعك خلال 48 ساعة من تأكيد الطلب' },
+    { icon: 'Shield', title: 'أمان واحترافية', description: 'أكواد نظيفة ومعايير أمان عالية لضمان جودة موقعك' },
+    { icon: 'MessageCircle', title: 'دعم فني متواصل', description: 'فريق دعم متاح 24/7 لمساعدتك في أي استفسار' },
+    { icon: 'Smartphone', title: 'متجاوب مع الكل', description: 'جميع قوالبنا متوافقة مع جميع الأجهزة والمتصفحات' },
+    { icon: 'Infinity', title: 'تحديثات مجانية', description: 'تحديثات مستمرة وتحسينات بدون أي رسوم إضافية' },
+  ])
 
   return (
     <div className="min-h-screen pt-24">
@@ -94,15 +90,18 @@ export default function AboutPage() {
             <p className="text-gray-500 mt-2">نقدم لك كل ما تحتاجه لبناء موقع احترافي</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center mb-4">
-                  <f.icon className="w-6 h-6 text-brand-600" />
+            {features.map((f, i) => {
+              const IconComponent = ICON_MAP[f.icon] || Sparkles
+              return (
+                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center mb-4">
+                    <IconComponent className="w-6 h-6 text-brand-600" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2">{f.title}</h3>
+                  <p className="text-sm text-gray-500">{f.description}</p>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-sm text-gray-500">{f.desc}</p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
