@@ -4,6 +4,9 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { AppError } from '../lib/AppError.js'
 
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.mp4', '.webm']
+const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
+
 const MAGIC_BYTES = {
   'image/jpeg': { header: [0xFF, 0xD8, 0xFF], offset: 0 },
   'image/png': { header: [0x89, 0x50, 0x4E, 0x47], offset: 0 },
@@ -45,20 +48,31 @@ const ALLOWED_MEDIA_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024
 
-function fileFilter(req, file, cb) {
-  if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-    cb(null, true)
-  } else {
-    cb(new AppError('نوع الملف غير مسموح (فقط JPEG, PNG, WebP)', 400, 'INVALID_FILE_TYPE'))
+function checkExtension(filename, allowedExts) {
+  const ext = path.extname(filename).toLowerCase()
+  if (!allowedExts.includes(ext)) {
+    throw new AppError(`امتداد الملف غير مسموح: ${ext}`, 400, 'INVALID_FILE_EXTENSION')
   }
 }
 
-function mediaFilter(req, file, cb) {
-  if (ALLOWED_MEDIA_MIMES.includes(file.mimetype)) {
+function fileFilter(req, file, cb) {
+  try {
+    checkExtension(file.originalname, ALLOWED_IMAGE_EXTENSIONS)
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      throw new AppError('نوع الملف غير مسموح (فقط JPEG, PNG, WebP)', 400, 'INVALID_FILE_TYPE')
+    }
     cb(null, true)
-  } else {
-    cb(new AppError('نوع الملف غير مسموح (صور أو فيديو فقط)', 400, 'INVALID_FILE_TYPE'))
-  }
+  } catch (err) { cb(err) }
+}
+
+function mediaFilter(req, file, cb) {
+  try {
+    checkExtension(file.originalname, ALLOWED_EXTENSIONS)
+    if (!ALLOWED_MEDIA_MIMES.includes(file.mimetype)) {
+      throw new AppError('نوع الملف غير مسموح (صور أو فيديو فقط)', 400, 'INVALID_FILE_TYPE')
+    }
+    cb(null, true)
+  } catch (err) { cb(err) }
 }
 
 function makeStorage(folder) {

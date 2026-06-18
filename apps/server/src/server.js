@@ -28,19 +28,17 @@ async function bootstrap() {
 
   try {
     console.log('📦 Running database migrations...')
-    execSync('npx prisma db push --accept-data-loss --skip-generate', { stdio: 'inherit', cwd: process.cwd() })
+    execSync('npx prisma migrate deploy', { stdio: 'inherit', cwd: process.cwd() })
     console.log('✅ Database schema synced')
   } catch (err) {
-    console.error('❌ Database migration failed:', err)
-    process.exit(1)
-  }
-
-  try {
-    console.log('🌱 Running seed...')
-    execSync('node prisma/seed.js', { stdio: 'inherit', cwd: process.cwd() })
-    console.log('✅ Seed complete')
-  } catch (err) {
-    console.warn('⚠️  Seed skipped (data may already exist)')
+    console.warn('⚠️  Migrate deploy failed, trying db push...')
+    try {
+      execSync('npx prisma db push --skip-generate', { stdio: 'inherit', cwd: process.cwd() })
+      console.log('✅ Database schema synced via push')
+    } catch (err2) {
+      console.error('❌ Database migration failed:', err2)
+      process.exit(1)
+    }
   }
 
   const server = http.createServer(app)

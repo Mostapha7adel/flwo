@@ -54,6 +54,8 @@ model User {
   @@index([phone])
   @@index([role])
   @@index([isActive])
+  @@index([createdAt])
+  @@index([role, isActive])
   @@map("users")
 }
 
@@ -91,6 +93,8 @@ model Template {
   @@index([isPublished])
   @@index([category])
   @@index([sortOrder])
+  @@index([category, isPublished])
+  @@index([createdAt])
   @@map("templates")
 }
 
@@ -114,6 +118,8 @@ model Order {
   @@index([status])
   @@index([createdAt])
   @@index([templateId])
+  @@index([userId, status])
+  @@index([status, createdAt])
   @@map("orders")
 }
 

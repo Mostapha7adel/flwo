@@ -1,10 +1,15 @@
 import jwt from 'jsonwebtoken'
+import { randomUUID } from 'crypto'
 import { config } from '../config/index.js'
 import { safeRedis } from '../config/redis.js'
 
+const ISS = 'templyn-api'
+const AUD_CLIENT = 'templyn-client'
+const AUD_ADMIN = 'templyn-admin'
+
 export function signAccessToken(userId, role) {
   return jwt.sign(
-    { sub: userId, role, type: 'access' },
+    { sub: userId, role, type: 'access', jti: randomUUID(), iss: ISS, aud: role === 'CLIENT' ? AUD_CLIENT : AUD_ADMIN },
     config.JWT_ACCESS_SECRET,
     { expiresIn: config.JWT_ACCESS_EXPIRES }
   )
@@ -12,18 +17,22 @@ export function signAccessToken(userId, role) {
 
 export function signRefreshToken(userId) {
   return jwt.sign(
-    { sub: userId, type: 'refresh' },
+    { sub: userId, type: 'refresh', jti: randomUUID(), iss: ISS, aud: AUD_CLIENT },
     config.JWT_REFRESH_SECRET,
     { expiresIn: config.JWT_REFRESH_EXPIRES }
   )
 }
 
 export function verifyAccessToken(token) {
-  return jwt.verify(token, config.JWT_ACCESS_SECRET)
+  const decoded = jwt.verify(token, config.JWT_ACCESS_SECRET)
+  if (decoded.iss !== ISS) throw new Error('Invalid issuer')
+  return decoded
 }
 
 export function verifyRefreshToken(token) {
-  return jwt.verify(token, config.JWT_REFRESH_SECRET)
+  const decoded = jwt.verify(token, config.JWT_REFRESH_SECRET)
+  if (decoded.iss !== ISS) throw new Error('Invalid issuer')
+  return decoded
 }
 
 export async function blacklistToken(token) {

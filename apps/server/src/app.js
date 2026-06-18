@@ -1,4 +1,5 @@
-import express from 'express'
+import express, { Router } from 'express'
+import compression from 'compression'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
@@ -26,6 +27,7 @@ const app = express()
 
 app.set('trust proxy', 1)
 
+app.use(compression())
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
@@ -41,15 +43,20 @@ app.use(helmet({
       frameAncestors: ["'self'", "https://huggingface.co", "https://*.hf.space"],
     },
   },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  noSniff: true,
+  xssFilter: true,
 }))
+const ALLOWED_ORIGINS = [
+  config.FRONTEND_URL?.replace(/\/$/, ''),
+  'https://huggingface.co',
+  'https://moustafa7-flwo.hf.space',
+  ...(config.NODE_ENV === 'development' ? ['http://localhost:5173', 'http://localhost:5000'] : []),
+].filter(Boolean)
+
 app.use(cors({
   origin: function (origin, callback) {
-    const allowed = [
-      config.FRONTEND_URL,
-      'https://huggingface.co',
-      ...(config.NODE_ENV === 'development' ? ['http://localhost:5173'] : []),
-    ].filter(Boolean)
-    if (!origin || allowed.some(a => origin.startsWith(a.replace(/\/$/, '')) || origin.includes('.hf.space'))) {
+    if (!origin || ALLOWED_ORIGINS.some(a => origin === a || origin.startsWith(a + '/'))) {
       callback(null, true)
     } else {
       callback(new Error('Not allowed by CORS'))
@@ -77,19 +84,23 @@ if (fs.existsSync(path.join(clientDist, 'index.html'))) {
 
 app.use('/api', generalLimiter)
 
-app.use('/api/auth', authRoutes)
-app.use('/api/users', userRoutes)
-app.use('/api/templates', templateRoutes)
-app.use('/api/orders', orderRoutes)
-app.use('/api/chat', chatRoutes)
-app.use('/api/landing', landingRoutes)
-app.use('/api/contact', contactRoutes)
-app.use('/api/notifications', notificationRoutes)
-app.use(`/api/${config.ADMIN_ROUTE_HINT}`, adminRoutes)
+const API_V1 = Router()
+API_V1.use('/auth', authRoutes)
+API_V1.use('/users', userRoutes)
+API_V1.use('/templates', templateRoutes)
+API_V1.use('/orders', orderRoutes)
+API_V1.use('/chat', chatRoutes)
+API_V1.use('/landing', landingRoutes)
+API_V1.use('/contact', contactRoutes)
+API_V1.use('/notifications', notificationRoutes)
+API_V1.use(`/${config.ADMIN_ROUTE_HINT}`, adminRoutes)
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+API_V1.get('/health', (req, res) => {
+  res.json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } })
 })
+
+app.use('/api/v1', API_V1)
+app.use('/api', API_V1)
 
 app.use((req, res) => {
   if (req.accepts('html') && !req.path.startsWith('/api')) {
@@ -99,7 +110,7 @@ app.use((req, res) => {
     }
     return res.status(200).send('<h1>DesignFlow</h1><p>Client is being built...</p>')
   }
-  res.status(404).json({ error: 'المسار غير موجود', code: 'NOT_FOUND' })
+  res.status(404).json({ success: false, message: 'المسار غير موجود', code: 'NOT_FOUND' })
 })
 
 app.use(errorHandler)
