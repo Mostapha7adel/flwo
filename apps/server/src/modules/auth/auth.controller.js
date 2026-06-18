@@ -66,8 +66,8 @@ export async function logout(req, res, next) {
   try {
     const accessToken = req.headers.authorization?.split(' ')[1]
     await authService.logoutUser(req.user.id, accessToken)
-    res.clearCookie('refresh_token', { path: '/api/auth/refresh' })
-    res.clearCookie('admin_refresh_token', { path: '/api/auth/refresh' })
+    const isAdmin = req.user.role !== 'CLIENT'
+    res.clearCookie(isAdmin ? 'admin_refresh_token' : 'refresh_token', { path: '/api/auth/refresh' })
     res.json({ message: 'تم تسجيل الخروج بنجاح' })
   } catch (err) { next(err) }
 }
