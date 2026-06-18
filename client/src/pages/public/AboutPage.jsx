@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Palette, Zap, Shield, MessageCircle, Smartphone, Infinity as InfinityIcon, Sparkles } from 'lucide-react'
+import { Palette, Zap, Shield, MessageCircle, Smartphone, Infinity as InfinityIcon, Sparkles, Star } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useSiteSettings } from '../../hooks/useSiteSettings'
 
