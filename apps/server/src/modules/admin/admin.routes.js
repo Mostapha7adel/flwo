@@ -341,7 +341,9 @@ router.put('/landing', validate(z.object({}).passthrough()), async (req, res, ne
       const parsed = schema.safeParse(content)
       if (!parsed.success) {
         const errors = parsed.error.flatten()
-        throw new AppError(`خطأ في بيانات ${section}`, 400, 'VALIDATION_ERROR')
+        console.error(`❌ Landing validation failed for section "${section}" with content:`, JSON.stringify(content).slice(0, 200))
+        console.error('   Errors:', errors)
+        throw new AppError(`خطأ في بيانات "${section}"`, 400, 'VALIDATION_ERROR')
       }
       ops.push(prisma.landingContent.upsert({
         where: { section },
