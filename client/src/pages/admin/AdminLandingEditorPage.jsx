@@ -106,7 +106,7 @@ export default function AdminLandingEditorPage() {
   const saveMutation = useMutation({
     mutationFn: (payload) => api.put('/admin/landing', payload),
     onSuccess: () => { toast.success('تم حفظ التغييرات بنجاح') },
-    onError: () => { toast.error('حدث خطأ أثناء الحفظ') },
+    onError: (err) => { toast.error(err.response?.data?.error || 'حدث خطأ أثناء الحفظ') },
   })
 
   const handleSave = () => {
