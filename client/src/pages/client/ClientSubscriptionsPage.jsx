@@ -104,6 +104,18 @@ export default function ClientSubscriptionsPage() {
                     <Calendar className="w-4 h-4 text-gray-400" />
                     {formatDate(s.createdAt)}
                   </div>
+                  {s.startDate && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-green-500" />
+                      يبدأ: {formatDate(s.startDate)}
+                    </div>
+                  )}
+                  {s.endDate && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-orange-500" />
+                      ينتهي: {formatDate(s.endDate)}
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <Server className="w-4 h-4 text-gray-400" />
                     {CYCLE_MAP[s.billingCycle] || s.billingCycle}

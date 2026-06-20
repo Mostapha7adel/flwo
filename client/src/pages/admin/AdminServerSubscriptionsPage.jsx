@@ -79,7 +79,9 @@ export default function AdminServerSubscriptionsPage() {
                 <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">المبلغ</th>
                 <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">الدورة</th>
                 <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">الحالة</th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">التاريخ</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">تاريخ البدء</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">تاريخ الانتهاء</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">تاريخ الطلب</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">إجراءات</th>
               </tr>
             </thead>
@@ -98,6 +100,8 @@ export default function AdminServerSubscriptionsPage() {
                     <td className="py-3 px-4 text-sm text-gray-600">${Number(s.price).toFixed(2)}</td>
                     <td className="py-3 px-4 text-sm text-gray-600">{CYCLE_MAP[s.billingCycle] || s.billingCycle}</td>
                     <td className="py-3 px-4"><Badge variant={st.variant}>{st.label}</Badge></td>
+                    <td className="py-3 px-4 text-sm text-gray-600">{s.startDate ? formatDate(s.startDate) : '—'}</td>
+                    <td className="py-3 px-4 text-sm text-gray-600">{s.endDate ? formatDate(s.endDate) : '—'}</td>
                     <td className="py-3 px-4 text-sm text-gray-600">{formatDate(s.createdAt)}</td>
                     <td className="py-3 px-4">
                       <div className="flex gap-2 justify-end">

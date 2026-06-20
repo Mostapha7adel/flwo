@@ -443,15 +443,20 @@ router.get('/accounts/summary', async (req, res, next) => {
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
 
-    const [paidOrders, pendingOrders, totalExpenses, monthExpenses, lastMonthOrders] = await Promise.all([
+    const [paidOrders, pendingOrders, totalExpenses, monthExpenses, lastMonthOrders, paidSubs, monthSubs, lastMonthSubs] = await Promise.all([
       prisma.order.aggregate({ _sum: { totalAmount: true }, where: { status: 'COMPLETED' } }),
       prisma.order.aggregate({ _sum: { totalAmount: true }, where: { status: { in: ['PENDING', 'ACCEPTED', 'IN_PROGRESS'] } } }),
       prisma.expense.aggregate({ _sum: { amount: true } }),
       prisma.expense.aggregate({ _sum: { amount: true }, where: { date: { gte: firstDay } } }),
       prisma.order.aggregate({ _sum: { totalAmount: true }, where: { status: 'COMPLETED', createdAt: { gte: lastMonth, lt: firstDay } } }),
+      prisma.serverSubscription.aggregate({ _sum: { price: true }, where: { status: 'ACTIVE' } }),
+      prisma.serverSubscription.aggregate({ _sum: { price: true }, where: { status: 'ACTIVE', startDate: { gte: firstDay } } }),
+      prisma.serverSubscription.aggregate({ _sum: { price: true }, where: { status: 'ACTIVE', startDate: { gte: lastMonth, lt: firstDay } } }),
     ])
 
-    const totalRevenue = Number(paidOrders._sum.totalAmount || 0)
+    const orderRevenue = Number(paidOrders._sum.totalAmount || 0)
+    const subRevenue = Number(paidSubs._sum.price || 0)
+    const totalRevenue = orderRevenue + subRevenue
     const pendingRevenue = Number(pendingOrders._sum.totalAmount || 0)
     const totalExpense = Number(totalExpenses._sum.amount || 0)
 
@@ -461,13 +466,16 @@ router.get('/accounts/summary', async (req, res, next) => {
       netProfit: totalRevenue - totalExpense,
       pendingRevenue,
       monthExpenses: Number(monthExpenses._sum.amount || 0),
-      lastMonthRevenue: Number(lastMonthOrders._sum.totalAmount || 0),
+      lastMonthRevenue: Number(lastMonthOrders._sum.totalAmount || 0) + Number(lastMonthSubs._sum.price || 0),
+      monthSubscriptionRevenue: Number(monthSubs._sum.price || 0),
       orderCounts: {
         completed: await prisma.order.count({ where: { status: 'COMPLETED' } }),
         pending: await prisma.order.count({ where: { status: 'PENDING' } }),
         inProgress: await prisma.order.count({ where: { status: 'IN_PROGRESS' } }),
         cancelled: await prisma.order.count({ where: { status: 'CANCELLED' } }),
       },
+      pendingSubscriptions: await prisma.serverSubscription.count({ where: { status: 'PENDING' } }),
+      activeSubscriptions: await prisma.serverSubscription.count({ where: { status: 'ACTIVE' } }),
     })
   } catch (err) { next(err) }
 })
@@ -566,7 +574,7 @@ router.delete('/accounts/expenses/:id', async (req, res, next) => {
 // Revenue breakdown by month
 router.get('/accounts/revenue-history', async (req, res, next) => {
   try {
-    const months = await prisma.$queryRaw`
+    const orderMonths = await prisma.$queryRaw`
       SELECT
         TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') as month,
         SUM("totalAmount")::float as revenue,
@@ -577,7 +585,24 @@ router.get('/accounts/revenue-history', async (req, res, next) => {
       ORDER BY month DESC
       LIMIT 12
     `
-    success(res, months)
+    const subMonths = await prisma.$queryRaw`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', "startDate"), 'YYYY-MM') as month,
+        SUM("price")::float as revenue,
+        COUNT(*)::int as subscriptions
+      FROM server_subscriptions
+      WHERE status = 'ACTIVE' AND "startDate" IS NOT NULL
+      GROUP BY DATE_TRUNC('month', "startDate")
+      ORDER BY month DESC
+      LIMIT 12
+    `
+    const merged = {}
+    for (const r of orderMonths) { merged[r.month] = { month: r.month, revenue: r.revenue, orders: r.orders, subscriptions: 0 } }
+    for (const r of subMonths) {
+      if (merged[r.month]) { merged[r.month].revenue = Number(merged[r.month].revenue) + Number(r.revenue); merged[r.month].subscriptions = r.subscriptions }
+      else merged[r.month] = { month: r.month, revenue: r.revenue, orders: 0, subscriptions: r.subscriptions }
+    }
+    success(res, Object.values(merged).sort((a, b) => b.month.localeCompare(a.month)))
   } catch (err) { next(err) }
 })
 router.patch('/contact/:id/read', contactCtrl.adminToggleRead)
@@ -591,6 +616,8 @@ router.put('/server-plans/:id', requireAdmin, validate(updatePlanSchema), server
 router.delete('/server-plans/:id', requireAdmin, serverPlansCtrl.deletePlan)
 
 router.get('/server-subscriptions', requireAdmin, serverPlansCtrl.getAllSubscriptions)
+router.get('/server-subscriptions/:id', requireAdmin, serverPlansCtrl.getSubscriptionById)
 router.patch('/server-subscriptions/:id', requireAdmin, validate(updateSubscriptionSchema), serverPlansCtrl.updateSubscription)
+router.post('/server-subscriptions/check-expiry', requireAdmin, serverPlansCtrl.checkExpiringSubscriptions)
 
 export default router

@@ -1,5 +1,6 @@
 import { success, created, paginated } from '../../lib/response.js'
 import { getPagination } from '../../lib/pagination.js'
+import { prisma } from '../../config/database.js'
 import * as service from './serverPlans.service.js'
 
 export async function listActivePlans(req, res, next) {
@@ -70,5 +71,35 @@ export async function updateSubscription(req, res, next) {
   try {
     const sub = await service.updateSubscription(req.params.id, req.validatedData)
     success(res, sub)
+  } catch (err) { next(err) }
+}
+
+export async function getSubscriptionById(req, res, next) {
+  try {
+    const sub = await service.getSubscriptionById(req.params.id)
+    success(res, sub)
+  } catch (err) { next(err) }
+}
+
+export async function checkExpiringSubscriptions(req, res, next) {
+  try {
+    const expiring = await service.getExpiringSubscriptions(3)
+    let sent = 0
+    for (const sub of expiring) {
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: sub.userId,
+            title: 'وشك اشتراكك على الانتهاء',
+            body: `باقي 3 أيام على انتهاء اشتراكك في باقة ${sub.plan.name} — جدد اشتراكك الآن`,
+            type: 'SUBSCRIPTION_EXPIRING',
+            link: '/dashboard/subscriptions',
+          },
+        })
+        await service.markRenewalNotified(sub.id)
+        sent++
+      } catch (_) {}
+    }
+    success(res, { sent, total: expiring.length })
   } catch (err) { next(err) }
 }

@@ -448,20 +448,24 @@ model ServerPlan {
 }
 
 model ServerSubscription {
-  id            String          @id @default(cuid())
-  userId        String
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  planId        String
-  plan          ServerPlan      @relation(fields: [planId], references: [id])
-  status        ServerSubStatus @default(PENDING)
-  billingCycle  BillingCycle    @default(MONTHLY)
-  price         Decimal         @db.Decimal(10, 2)
-  adminNotes    String?         @db.Text
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id                      String          @id @default(cuid())
+  userId                  String
+  user                    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId                  String
+  plan                    ServerPlan      @relation(fields: [planId], references: [id])
+  status                  ServerSubStatus @default(PENDING)
+  billingCycle            BillingCycle    @default(MONTHLY)
+  price                   Decimal         @db.Decimal(10, 2)
+  startDate               DateTime?
+  endDate                 DateTime?
+  renewalNotificationSent Boolean         @default(false)
+  adminNotes              String?         @db.Text
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
 
   @@index([userId])
   @@index([status])
+  @@index([endDate])
   @@index([userId, status])
   @@map("server_subscriptions")
 }

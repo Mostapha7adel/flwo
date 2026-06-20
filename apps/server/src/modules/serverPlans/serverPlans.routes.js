@@ -10,5 +10,6 @@ router.get('/server-plans', ctrl.listActivePlans)
 
 router.post('/server-subscriptions', authenticate, validate(createSubscriptionSchema), ctrl.createSubscription)
 router.get('/server-subscriptions', authenticate, ctrl.listUserSubscriptions)
+router.get('/server-subscriptions/:id', authenticate, ctrl.getSubscriptionById)
 
 export default router

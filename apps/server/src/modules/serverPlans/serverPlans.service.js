@@ -47,10 +47,21 @@ export async function createSubscription(userId, data) {
   const plan = await getPlanById(data.planId)
   if (!plan.isActive) throw new AppError('الباقة غير متاحة حالياً', 400, 'PLAN_INACTIVE')
 
-  const existing = await prisma.serverSubscription.findFirst({
-    where: { userId, planId: data.planId, status: { in: ['PENDING', 'ACTIVE'] } },
+  const active = await prisma.serverSubscription.findFirst({
+    where: { userId, status: { in: ['PENDING', 'ACTIVE'] } },
+    orderBy: { createdAt: 'desc' },
   })
-  if (existing) throw new AppError('لديك اشتراك نشط أو معلق لهذه الباقة بالفعل', 409, 'DUPLICATE_SUBSCRIPTION')
+
+  if (active) {
+    if (active.status === 'PENDING') {
+      throw new AppError('لديك طلب اشتراك معلق بالفعل', 409, 'PENDING_SUBSCRIPTION')
+    }
+    const now = new Date()
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+    if (active.endDate && active.endDate > threeDaysFromNow) {
+      throw new AppError('لا يمكنك طلب اشتراك جديد إلا قبل 3 أيام من انتهاء الاشتراك الحالي أو بعده', 409, 'ACTIVE_SUBSCRIPTION')
+    }
+  }
 
   const price = data.billingCycle === 'YEARLY' ? plan.yearlyPrice : plan.monthlyPrice
 
@@ -71,7 +82,7 @@ export async function createSubscription(userId, data) {
         data: staff.map(s => ({
           userId: s.id,
           title: 'طلب اشتراك جديد',
-          body: `طلب اشتراك في باقة ${plan.name}`,
+          body: `طلب اشتراك جديد في باقة ${plan.name}`,
           type: NOTIFICATION_TYPES.NEW_ORDER,
           link: `/x9k2-manage/panel/server-subscriptions`,
         })),
@@ -95,6 +106,18 @@ export async function getAllSubscriptions({ page = 1, limit = 20 }) {
   return { subscriptions, total, page, totalPages: Math.ceil(total / limit) }
 }
 
+export async function getSubscriptionById(id) {
+  const sub = await prisma.serverSubscription.findUnique({
+    where: { id },
+    include: {
+      plan: true,
+      user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+    },
+  })
+  if (!sub) throw new AppError('الاشتراك غير موجود', 404, 'SUBSCRIPTION_NOT_FOUND')
+  return sub
+}
+
 export async function updateSubscription(id, data) {
   const sub = await prisma.serverSubscription.findUnique({
     where: { id },
@@ -102,12 +125,69 @@ export async function updateSubscription(id, data) {
   })
   if (!sub) throw new AppError('الاشتراك غير موجود', 404, 'SUBSCRIPTION_NOT_FOUND')
 
+  const updateData = {
+    status: data.status || sub.status,
+    adminNotes: data.adminNotes ?? sub.adminNotes,
+  }
+
+  if (data.status === 'ACTIVE' && sub.status !== 'ACTIVE') {
+    const now = new Date()
+    updateData.startDate = now
+    updateData.endDate = new Date(now.getTime() + (sub.billingCycle === 'YEARLY' ? 365 : 30) * 24 * 60 * 60 * 1000)
+
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: sub.userId,
+          title: 'تم قبول طلب الاشتراك',
+          body: `تم تفعيل اشتراكك في باقة ${sub.plan.name}`,
+          type: 'SUBSCRIPTION_ACTIVATED',
+          link: '/dashboard/subscriptions',
+        },
+      })
+    } catch (_) {}
+  }
+
+  if (data.status === 'REJECTED' && sub.status !== 'REJECTED') {
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: sub.userId,
+          title: 'تم رفض طلب الاشتراك',
+          body: `عذراً، تم رفض طلب اشتراكك في باقة ${sub.plan.name}${data.adminNotes ? ` — ${data.adminNotes}` : ''}`,
+          type: 'SUBSCRIPTION_REJECTED',
+          link: '/dashboard/subscriptions',
+        },
+      })
+    } catch (_) {}
+  }
+
   return prisma.serverSubscription.update({
     where: { id },
-    data: {
-      status: data.status || sub.status,
-      adminNotes: data.adminNotes ?? sub.adminNotes,
-    },
+    data: updateData,
     include: { plan: true, user: { select: { id: true, firstName: true, lastName: true, email: true } } },
+  })
+}
+
+export async function getExpiringSubscriptions(daysBefore = 3) {
+  const target = new Date()
+  target.setDate(target.getDate() + daysBefore)
+  const startOfDay = new Date(target.getFullYear(), target.getMonth(), target.getDate())
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000)
+
+  return prisma.serverSubscription.findMany({
+    where: {
+      status: 'ACTIVE',
+      endDate: { gte: startOfDay, lt: endOfDay },
+      renewalNotificationSent: false,
+    },
+    include: { plan: true, user: true },
+  })
+}
+
+export async function markRenewalNotified(id) {
+  return prisma.serverSubscription.update({
+    where: { id },
+    data: { renewalNotificationSent: true },
   })
 }
