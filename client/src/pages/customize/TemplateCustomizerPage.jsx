@@ -47,6 +47,7 @@ export default function TemplateCustomizerPage() {
   const navigate = useNavigate()
   const { sections, colorTokens, updateColor, reorderSections, initCustomizer } = useTemplateStore()
   const [showDemo, setShowDemo] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const { data: template, isLoading } = useQuery({
     queryKey: ['template', templateId],
@@ -98,12 +99,16 @@ export default function TemplateCustomizerPage() {
   }
 
   const handleSubmitOrder = async () => {
+    if (submitting) return
+    setSubmitting(true)
     try {
       const { data } = await api.post('/orders', { templateId, colors: colorTokens })
       navigate(`/dashboard/orders/${data.id}?success=true`)
       toast.success('تم إرسال طلبك بنجاح!')
     } catch (err) {
       toast.error(err?.response?.data?.error || 'حدث خطأ، حاول مجدداً')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -125,9 +130,9 @@ export default function TemplateCustomizerPage() {
               معاينة حية
             </button>
           )}
-          <Button onClick={handleSubmitOrder} size="sm">
-            <CheckCircle className="w-4 h-4" />
-            طلب الآن
+          <Button onClick={handleSubmitOrder} size="sm" disabled={submitting}>
+            <CheckCircle className={`w-4 h-4 ${submitting ? 'animate-spin' : ''}`} />
+            {submitting ? 'جاري الإرسال...' : 'طلب الآن'}
           </Button>
         </div>
       </div>

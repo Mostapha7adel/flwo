@@ -12,6 +12,13 @@ export async function createOrder(userId, data) {
   })
   if (!template) throw new AppError('القالب غير موجود', 404, 'TEMPLATE_NOT_FOUND')
 
+  const existingOrder = await prisma.order.findFirst({
+    where: { userId, templateId: data.templateId, status: { in: ['PENDING', 'ACCEPTED', 'IN_PROGRESS'] } }
+  })
+  if (existingOrder) {
+    throw new AppError('لديك طلب نشط لهذا القالب بالفعل. يمكنك إلغاء الطلب الحالي أولاً أو انتظار اكتماله.', 409, 'DUPLICATE_ORDER')
+  }
+
   const basePrice = parseFloat(template.price.toString())
   const additionalPrice = (data.additionalPages || 0) * PAGE_PRICE
   const totalAmount = basePrice + additionalPrice
