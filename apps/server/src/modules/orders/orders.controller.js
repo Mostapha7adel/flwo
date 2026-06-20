@@ -13,7 +13,7 @@ export async function list(req, res, next) {
   try {
     const { page, limit } = getPagination(req.query)
     const result = await ordersService.getUserOrders(req.user.id, { page, limit })
-    paginated(res, result.orders, result.total, result.page, limit)
+    paginated(res, { orders: result.orders, page: result.page, totalPages: result.totalPages }, result.total, result.page, limit)
   } catch (err) { next(err) }
 }
 

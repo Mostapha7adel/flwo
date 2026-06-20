@@ -20,7 +20,7 @@ export async function adminList(req, res, next) {
     const { page, limit } = getPagination(req.query)
     const status = req.query.status
     const result = await contactService.getAllMessages({ page, limit, status })
-    paginated(res, result.messages, result.total, result.page, limit)
+    paginated(res, { messages: result.messages, total: result.total, page: result.page, totalPages: result.totalPages }, result.total, result.page, limit)
   } catch (err) { next(err) }
 }
 

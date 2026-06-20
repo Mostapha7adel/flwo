@@ -29,16 +29,15 @@ async function bootstrap() {
 
   try {
     logger.info('Running database migrations...')
-    execSync('npx prisma migrate deploy', { stdio: 'inherit', cwd: process.cwd() })
+    execSync('npx --yes prisma migrate deploy', { stdio: 'inherit', cwd: process.cwd(), timeout: 30000 })
     logger.info('Database schema synced')
   } catch (err) {
-    logger.warn(err, 'Migrate deploy failed, trying db push...')
+    logger.warn({ err: err.message }, 'Migrate deploy failed, trying db push...')
     try {
-      execSync('npx prisma db push --skip-generate', { stdio: 'inherit', cwd: process.cwd() })
+      execSync('npx --yes prisma db push --skip-generate', { stdio: 'inherit', cwd: process.cwd(), timeout: 30000 })
       logger.info('Database schema synced via push')
     } catch (err2) {
-      logger.fatal(err2, 'Database migration failed')
-      process.exit(1)
+      logger.warn('Db push also failed, server will start anyway — schema may be out of date')
     }
   }
 

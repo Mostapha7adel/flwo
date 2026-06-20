@@ -123,6 +123,6 @@ export async function getMessages(req, res, next) {
       req.user.role,
       { page, limit }
     )
-    paginated(res, result.messages, result.total, result.page, limit)
+    paginated(res, { messages: result.messages, page: result.page, totalPages: result.totalPages }, result.total, result.page, limit)
   } catch (err) { next(err) }
 }

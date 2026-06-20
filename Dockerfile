@@ -14,7 +14,7 @@ COPY apps/server/package.json apps/server/package-lock.json ./apps/server/
 RUN cd apps/server && npm ci --omit=dev
 
 COPY apps/server/prisma/ ./apps/server/prisma/
-RUN cd apps/server && npx prisma generate
+RUN cd apps/server && npx --yes prisma generate
 
 COPY apps/server/ ./apps/server/
 

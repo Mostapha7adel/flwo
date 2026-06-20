@@ -6,7 +6,7 @@ export async function list(req, res, next) {
   try {
     const { page, limit } = getPagination(req.query)
     const result = await versionsService.getVersions(req.params.templateId, page, limit)
-    paginated(res, result.versions, result.total, result.page, limit)
+    paginated(res, { versions: result.versions, page: result.page, totalPages: result.totalPages, total: result.total }, result.total, result.page, limit)
   } catch (err) { next(err) }
 }
 

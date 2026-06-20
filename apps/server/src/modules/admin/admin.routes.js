@@ -78,7 +78,7 @@ router.get('/users', async (req, res, next) => {
       ])
       return { ...u, completedOrders: completed, cancelledOrders: cancelled, totalOrders }
     }))
-    paginated(res, usersWithStats, total, page, limit)
+    paginated(res, { users: usersWithStats, total, page, totalPages: Math.ceil(total / limit) }, total, page, limit)
   } catch (err) { next(err) }
 })
 
@@ -173,7 +173,7 @@ router.get('/accounts', async (req, res, next) => {
       }),
       prisma.user.count({ where: { role: { in: staffRoles } } }),
     ])
-    paginated(res, users, total, page, limit)
+    paginated(res, { accounts: users, total, page, totalPages: Math.ceil(total / limit) }, total, page, limit)
   } catch (err) { next(err) }
 })
 
@@ -270,7 +270,7 @@ router.get('/orders', async (req, res, next) => {
       }),
       prisma.order.count({ where })
     ])
-    paginated(res, orders, total, page, limit)
+    paginated(res, { orders, total, page, totalPages: Math.ceil(total / limit) }, total, page, limit)
   } catch (err) { next(err) }
 })
 
@@ -418,7 +418,7 @@ router.get('/conversations', async (req, res, next) => {
       }),
       prisma.conversation.count()
     ])
-    paginated(res, conversations, total, page, limit)
+    paginated(res, { conversations, total, page, totalPages: Math.ceil(total / limit) }, total, page, limit)
   } catch (err) { next(err) }
 })
 

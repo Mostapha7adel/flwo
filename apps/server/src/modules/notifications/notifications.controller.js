@@ -7,7 +7,7 @@ export async function list(req, res, next) {
     const { page, limit } = getPagination(req.query)
     const unreadOnly = req.query.unread === 'true'
     const result = await svc.getUserNotifications(req.user.id, { page, limit, unreadOnly })
-    paginated(res, result.notifications, result.total, result.page, limit)
+    paginated(res, { notifications: result.notifications, page: result.page, totalPages: result.totalPages }, result.total, result.page, limit)
   } catch (err) { next(err) }
 }
 

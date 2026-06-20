@@ -32,7 +32,7 @@ export default function AdminTemplateVersionsPage() {
     enabled: !!templateId,
   })
 
-  const versions = data?.data ?? []
+  const versions = data?.versions ?? data?.data ?? []
 
   const createMutation = useMutation({
     mutationFn: (payload) => api.post(`/admin/templates/${templateId}/versions`, payload),
@@ -107,7 +107,7 @@ export default function AdminTemplateVersionsPage() {
 
       <PageHeader
         title="إدارة الإصدارات"
-        description={`${data?.meta?.total || versions.length} إصدار`}
+        description={`${data?.total || versions.length} إصدار`}
         action={
           <Button onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4" /> إضافة إصدار جديد

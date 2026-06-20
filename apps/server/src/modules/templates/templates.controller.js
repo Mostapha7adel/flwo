@@ -13,7 +13,7 @@ export async function listPublished(req, res, next) {
       page,
       limit
     })
-    paginated(res, result.templates, result.total, result.page, limit)
+    paginated(res, { templates: result.templates, page: result.page, totalPages: result.totalPages }, result.total, result.page, limit)
   } catch (err) { next(err) }
 }
 
@@ -42,7 +42,7 @@ export async function adminList(req, res, next) {
   try {
     const { page, limit } = getPagination(req.query)
     const result = await templatesService.getAllTemplates({ page, limit })
-    paginated(res, result.templates, result.total, result.page, limit)
+    paginated(res, { templates: result.templates, page: result.page, totalPages: result.totalPages }, result.total, result.page, limit)
   } catch (err) { next(err) }
 }
 
