@@ -190,13 +190,41 @@ export async function updateSubscription(id, data) {
   })
   if (!sub) throw new AppError('الاشتراك غير موجود', 404, 'SUBSCRIPTION_NOT_FOUND')
 
+  const now = new Date()
+  const isExpired = sub.endDate && sub.endDate < now
+
+  if (sub.status === 'ACTIVE' && data.status === 'ACTIVE') {
+    throw new AppError('الاشتراك نشط بالفعل', 400, 'ALREADY_ACTIVE')
+  }
+
+  if (sub.status === 'ACTIVE' && data.status === 'REJECTED') {
+    throw new AppError('لا يمكن رفض اشتراك نشط. يمكنك إلغاؤه فقط عند انتهاء مدته', 400, 'CANNOT_REJECT_ACTIVE')
+  }
+
+  if (sub.status === 'ACTIVE' && data.status === 'CANCELLED' && !isExpired) {
+    throw new AppError('لا يمكن إلغاء اشتراك نشط قبل انتهاء مدته', 400, 'CANNOT_CANCEL_ACTIVE')
+  }
+
   const updateData = {
     status: data.status || sub.status,
     adminNotes: data.adminNotes ?? sub.adminNotes,
   }
 
+  if (sub.status === 'ACTIVE' && data.status === 'CANCELLED' && isExpired) {
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: sub.userId,
+          title: 'تم إلغاء الاشتراك',
+          body: `تم إلغاء اشتراكك في باقة ${sub.plan.name} لعدم التجديد`,
+          type: 'SUBSCRIPTION_CANCELLED',
+          link: '/dashboard/subscriptions',
+        },
+      })
+    } catch (_) {}
+  }
+
   if (data.status === 'ACTIVE' && sub.status !== 'ACTIVE') {
-    const now = new Date()
     updateData.startDate = now
     updateData.endDate = new Date(now.getTime() + (sub.billingCycle === 'YEARLY' ? 365 : 30) * 24 * 60 * 60 * 1000)
 
@@ -225,6 +253,11 @@ export async function updateSubscription(id, data) {
         },
       })
     } catch (_) {}
+  }
+
+  const updateData = {
+    status: data.status || sub.status,
+    adminNotes: data.adminNotes ?? sub.adminNotes,
   }
 
   return prisma.serverSubscription.update({
