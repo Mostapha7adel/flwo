@@ -9,7 +9,6 @@ const links = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'نظرة عامة', end: true },
   { to: '/dashboard/orders', icon: ShoppingBag, label: 'طلباتي' },
   { to: '/dashboard/subscriptions', icon: CreditCard, label: 'الاستضافة' },
-  { to: '/dashboard/subscriptions', icon: CreditCard, label: 'الاستضافة' },
   { to: '/dashboard/chat', icon: MessageCircle, label: 'المحادثة' },
   { to: '/dashboard/profile', icon: User, label: 'الملف الشخصي' },
 ]
