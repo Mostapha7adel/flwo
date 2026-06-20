@@ -2,17 +2,18 @@ import { useEffect } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '../../utils/cn'
 
-export function Modal({ open, onClose, children, title, size = 'md' }) {
+export function Modal({ open, isOpen, onClose, children, title, size = 'md' }) {
+  const isVisible = open ?? isOpen ?? false
   useEffect(() => {
-    if (open) {
+    if (isVisible) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
     }
     return () => { document.body.style.overflow = '' }
-  }, [open])
+  }, [isVisible])
 
-  if (!open) return null
+  if (!isVisible) return null
 
   const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' }
 

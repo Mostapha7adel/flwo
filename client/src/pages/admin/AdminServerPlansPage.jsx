@@ -172,7 +172,7 @@ export default function AdminServerPlansPage() {
         </div>
       )}
 
-      <Modal isOpen={showModal} onClose={closeModal} title={editId ? 'تعديل الباقة' : 'إضافة باقة'} size="lg">
+      <Modal open={showModal} onClose={closeModal} title={editId ? 'تعديل الباقة' : 'إضافة باقة'} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="اسم الباقة" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <Textarea label="الوصف" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
