@@ -44,7 +44,9 @@ export async function createOrder(userId, data) {
     }
   })
 
-  await sendEmail(order.user.email, ORDER_CONFIRMED(order))
+  try {
+    await sendEmail(order.user.email, ORDER_CONFIRMED(order))
+  } catch (_) {}
 
   try {
     const staff = await prisma.user.findMany({ where: { role: { in: STAFF_ROLES }, isActive: true }, select: { id: true } })
