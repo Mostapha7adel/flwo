@@ -40,6 +40,7 @@ const AdminTemplateFieldsPage = lazy(() => import('../pages/admin/AdminTemplateF
 const AdminTemplateAssetsPage = lazy(() => import('../pages/admin/AdminTemplateAssetsPage'))
 const AdminServerPlansPage = lazy(() => import('../pages/admin/AdminServerPlansPage'))
 const AdminServerSubscriptionsPage = lazy(() => import('../pages/admin/AdminServerSubscriptionsPage'))
+const AdminSubscriptionDetailPage = lazy(() => import('../pages/admin/AdminSubscriptionDetailPage'))
 const ClientServersPage = lazy(() => import('../pages/client/ClientServersPage'))
 const ClientSubscriptionsPage = lazy(() => import('../pages/client/ClientSubscriptionsPage'))
 const ClientProjectPage = lazy(() => import('../pages/client/ClientProjectPage'))
@@ -114,6 +115,7 @@ const router = createBrowserRouter([
       { path: 'chat/:convId', element: <PageTransition><AdminChatPage /></PageTransition> },
       { path: 'server-plans', element: <PageTransition><AdminServerPlansPage /></PageTransition> },
       { path: 'server-subscriptions', element: <PageTransition><AdminServerSubscriptionsPage /></PageTransition> },
+      { path: 'server-subscriptions/:id', element: <PageTransition><AdminSubscriptionDetailPage /></PageTransition> },
       { path: 'users', element: <PageTransition><AdminUsersPage /></PageTransition> },
       { path: 'contact', element: <PageTransition><AdminContactPage /></PageTransition> },
       { path: 'accounts', element: <PageTransition><AdminAccountsPage /></PageTransition> },

@@ -178,8 +178,8 @@ export default function AdminOrdersPage() {
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
                             {isSub ? (
-                              <Button size="sm" variant="ghost" onClick={() => navigate(`/x9k2-manage/panel/server-subscriptions`)}>
-                                عرض الاشتراك
+                              <Button size="sm" variant="ghost" onClick={() => navigate(`/x9k2-manage/panel/server-subscriptions/${order.id}`)}>
+                                عرض
                               </Button>
                             ) : (
                               <>
