@@ -255,11 +255,6 @@ export async function updateSubscription(id, data) {
     } catch (_) {}
   }
 
-  const updateData = {
-    status: data.status || sub.status,
-    adminNotes: data.adminNotes ?? sub.adminNotes,
-  }
-
   return prisma.serverSubscription.update({
     where: { id },
     data: updateData,
