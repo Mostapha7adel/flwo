@@ -40,7 +40,7 @@ export default function TemplatePreviewPage() {
     enabled: !!id,
   })
 
-  const reviews = reviewsData?.data ?? reviewsData ?? []
+  const reviews = reviewsData?.reviews ?? reviewsData ?? []
   const stats = statsData?.data ?? statsData ?? {}
   const avgRating = stats.avgRating ?? 0
   const totalReviews = stats.totalReviews ?? 0
