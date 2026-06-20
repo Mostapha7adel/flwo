@@ -23,13 +23,13 @@ export default function AdminServerPlansPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-server-plans'],
-    queryFn: () => api.get('/x9k2-manage/panel/server-plans').then(r => r.data),
+    queryFn: () => api.get('/admin/server-plans').then(r => r.data),
   })
 
   const plans = data?.data ?? data ?? []
 
   const createMutation = useMutation({
-    mutationFn: (payload) => api.post('/x9k2-manage/panel/server-plans', payload),
+    mutationFn: (payload) => api.post('/admin/server-plans', payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-server-plans'] })
       toast.success('تم إضافة الباقة بنجاح')
@@ -39,7 +39,7 @@ export default function AdminServerPlansPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }) => api.put(`/x9k2-manage/panel/server-plans/${id}`, payload),
+    mutationFn: ({ id, payload }) => api.put(`/admin/server-plans/${id}`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-server-plans'] })
       toast.success('تم تحديث الباقة بنجاح')
@@ -49,7 +49,7 @@ export default function AdminServerPlansPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/x9k2-manage/panel/server-plans/${id}`),
+    mutationFn: (id) => api.delete(`/admin/server-plans/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-server-plans'] })
       toast.success('تم حذف الباقة')

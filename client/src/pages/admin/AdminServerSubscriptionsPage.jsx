@@ -32,13 +32,13 @@ export default function AdminServerSubscriptionsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-server-subscriptions'],
-    queryFn: () => api.get('/x9k2-manage/panel/server-subscriptions').then(r => r.data),
+    queryFn: () => api.get('/admin/server-subscriptions').then(r => r.data),
   })
 
   const subs = data?.data?.subscriptions ?? data?.subscriptions ?? data?.data ?? []
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }) => api.patch(`/x9k2-manage/panel/server-subscriptions/${id}`, payload),
+    mutationFn: ({ id, payload }) => api.patch(`/admin/server-subscriptions/${id}`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-server-subscriptions'] })
       toast.success('تم تحديث الاشتراك')
