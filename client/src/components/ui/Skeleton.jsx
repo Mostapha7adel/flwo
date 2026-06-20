@@ -4,7 +4,7 @@ export function Skeleton({ className }) {
   return <div className={cn('animate-pulse rounded-md bg-gray-200', className)} />
 }
 
-export function SkeletonCard() {
+export function CardSkeleton() {
   return (
     <div className="bg-white rounded-2xl p-6 space-y-4">
       <Skeleton className="w-full h-48 rounded-xl" />
