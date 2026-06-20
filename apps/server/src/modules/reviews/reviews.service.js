@@ -6,7 +6,7 @@ export async function getTemplateReviews(templateId, { page = 1, limit = 10 }) {
     prisma.templateReview.findMany({
       where: { templateId },
       include: {
-        user: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+        user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -48,7 +48,7 @@ export async function createReview(templateId, userId, data) {
   return prisma.templateReview.create({
     data: { templateId, userId, ...data },
     include: {
-      user: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+      user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
     },
   })
 }

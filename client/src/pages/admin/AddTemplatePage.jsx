@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { Upload, Image, Plus, X } from 'lucide-react'
+import { Upload, Image, Plus, X, FileJson, FileArchive } from 'lucide-react'
 import { api } from '../../lib/axios'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -26,7 +26,7 @@ export default function AddTemplatePage() {
   const navigate = useNavigate()
   const isEdit = !!id
 
-  const { data: editData, isLoading: editLoading } = useQuery({
+  const { data: editData, isLoading: editLoading, refetch: refetchTemplate } = useQuery({
     queryKey: ['admin-template', id],
     queryFn: () => api.get(`/admin/templates/${id}`).then(r => r.data),
     enabled: isEdit,
@@ -50,6 +50,10 @@ export default function AddTemplatePage() {
   const [gallery, setGallery] = useState([])
   const [videoUrl, setVideoUrl] = useState('')
   const [features, setFeatures] = useState('')
+  const [manifestInfo, setManifestInfo] = useState(null)
+  const [manifestUploading, setManifestUploading] = useState(false)
+  const [sourceFileName, setSourceFileName] = useState('')
+  const [sourceUploading, setSourceUploading] = useState(false)
 
   useEffect(() => {
     if (editData) {
@@ -69,6 +73,7 @@ export default function AddTemplatePage() {
       setGallery(editData.gallery || [])
       setVideoUrl(editData.videoUrl || '')
       setFeatures(editData.features ? JSON.stringify(editData.features, null, 2) : '')
+      if (editData.manifest) setManifestInfo(editData.manifest)
     }
   }, [editData])
 
@@ -111,6 +116,42 @@ export default function AddTemplatePage() {
   }
 
   const removeGalleryImage = (url) => setGallery(gallery.filter(u => u !== url))
+
+  const handleManifestUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !id) return
+    const form = new FormData()
+    form.append('manifest', file)
+    setManifestUploading(true)
+    try {
+      const { data } = await api.post(`/admin/templates/${id}/manifest`, form)
+      setManifestInfo(data.manifest)
+      if (data.templateType) setDeploymentType(data.deploymentType || deploymentType)
+      toast.success(`تم رفع manifest.json — ${data.fieldsCount} حقل`)
+      refetchTemplate()
+    } catch {
+      toast.error('فشل رفع manifest.json')
+    } finally {
+      setManifestUploading(false)
+    }
+  }
+
+  const handleSourceUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !id) return
+    const form = new FormData()
+    form.append('source', file)
+    setSourceUploading(true)
+    try {
+      await api.post(`/admin/templates/${id}/source`, form)
+      setSourceFileName(file.name)
+      toast.success('تم رفع الكود المصدري')
+    } catch {
+      toast.error('فشل رفع الكود المصدري')
+    } finally {
+      setSourceUploading(false)
+    }
+  }
 
   const mutation = useMutation({
     mutationFn: (payload) => {
@@ -234,6 +275,34 @@ export default function AddTemplatePage() {
                 { value: 'رياضة', label: 'رياضة' },
               ]}
             />
+            {isEdit && (
+              <div className="p-4 bg-brand-50 rounded-xl border border-brand-200">
+                <h4 className="font-bold text-sm text-brand-700 mb-2 flex items-center gap-2">
+                  <FileJson className="w-4 h-4" /> manifest.json
+                </h4>
+                {manifestInfo ? (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <Badge variant="info">{manifestInfo.name}</Badge>
+                      <Badge variant="success">v{manifestInfo.version}</Badge>
+                      {manifestInfo.type && <Badge variant="subtle">{manifestInfo.type}</Badge>}
+                      {manifestInfo.framework && <Badge variant="subtle">{manifestInfo.framework}</Badge>}
+                    </div>
+                    <p className="text-xs text-gray-500">{manifestInfo.fields?.length || 0} حقل قابل للتخصيص</p>
+                    <label className="cursor-pointer inline-flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700 font-medium">
+                      <Upload className="w-3 h-3" /> تغيير الملف
+                      <input type="file" accept=".json" className="hidden" onChange={handleManifestUpload} />
+                    </label>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium">
+                    <Upload className="w-4 h-4" />
+                    {manifestUploading ? 'جاري الرفع...' : 'رفع manifest.json'}
+                    <input type="file" accept=".json" className="hidden" onChange={handleManifestUpload} disabled={manifestUploading} />
+                  </label>
+                )}
+              </div>
+            )}
             <Input label="السعر" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
             <Input label="رابط العرض الحي (demo)" type="url" dir="ltr" placeholder="https://..." value={demoUrl} onChange={(e) => setDemoUrl(e.target.value)} />
             <div>
@@ -308,6 +377,23 @@ export default function AddTemplatePage() {
               value={deploymentScript}
               onChange={(e) => setDeploymentScript(e.target.value)}
             />
+            {isEdit && (
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <h4 className="font-bold text-sm text-gray-700 mb-2 flex items-center gap-2">
+                  <FileArchive className="w-4 h-4" /> الكود المصدري
+                </h4>
+                {sourceFileName ? (
+                  <p className="text-xs text-gray-500 mb-2">تم الرفع: {sourceFileName}</p>
+                ) : editData?.sourceFile ? (
+                  <p className="text-xs text-gray-500 mb-2">ملف مصدر مضاف مسبقاً</p>
+                ) : null}
+                <label className="cursor-pointer inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 font-medium">
+                  <Upload className="w-4 h-4" />
+                  {sourceUploading ? 'جاري الرفع...' : 'رفع ملف ZIP'}
+                  <input type="file" accept=".zip,.gz" className="hidden" onChange={handleSourceUpload} disabled={sourceUploading} />
+                </label>
+              </div>
+            )}
             <Input label="رابط الكود المصدري (sourceUrl)" type="url" dir="ltr" placeholder="https://github.com/..." value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} />
             <div>
               <label className="text-sm font-semibold text-gray-700 mb-1.5 block">معرض الصور (gallery)</label>

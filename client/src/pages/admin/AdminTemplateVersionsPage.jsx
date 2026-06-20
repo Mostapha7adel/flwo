@@ -28,14 +28,14 @@ export default function AdminTemplateVersionsPage() {
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['template-versions', templateId],
-    queryFn: () => api.get(`/admin/templates/${templateId}/versions`).then(r => r.data),
+    queryFn: () => api.get(`/templates/${templateId}/versions`).then(r => r.data),
     enabled: !!templateId,
   })
 
   const versions = data?.versions ?? data?.data ?? []
 
   const createMutation = useMutation({
-    mutationFn: (payload) => api.post(`/admin/templates/${templateId}/versions`, payload),
+    mutationFn: (payload) => api.post(`/templates/${templateId}/versions`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['template-versions', templateId] })
       toast.success('تم إضافة الإصدار بنجاح')
@@ -50,7 +50,7 @@ export default function AdminTemplateVersionsPage() {
   })
 
   const setCurrentMutation = useMutation({
-    mutationFn: (id) => api.put(`/admin/templates/${templateId}/versions/${id}/current`),
+    mutationFn: (id) => api.put(`/templates/${templateId}/versions/${id}/current`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['template-versions', templateId] })
       toast.success('تم تعيين الإصدار كحالي')
@@ -59,7 +59,7 @@ export default function AdminTemplateVersionsPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/admin/templates/${templateId}/versions/${id}`),
+    mutationFn: (id) => api.delete(`/templates/${templateId}/versions/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['template-versions', templateId] })
       toast.success('تم حذف الإصدار')

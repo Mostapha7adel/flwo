@@ -139,3 +139,29 @@ export const uploadMedia = multer({
   limits: { fileSize: MAX_VIDEO_SIZE },
   fileFilter: mediaFilter,
 }).single('file')
+
+const ALLOWED_SOURCE_EXTS = ['.zip', '.tar.gz', '.gz']
+const ALLOWED_MANIFEST_EXTS = ['.json']
+
+function sourceFilter(req, file, cb) {
+  const ext = path.extname(file.originalname).toLowerCase()
+  if (ext === '.zip' || ext === '.gz') return cb(null, true)
+  const name = file.originalname.toLowerCase()
+  if (name.endsWith('.tar.gz')) return cb(null, true)
+  cb(new AppError('امتداد الملف غير مسموح (ZIP فقط)', 400, 'INVALID_FILE_EXTENSION'))
+}
+
+export const uploadSource = multer({
+  storage: makeStorage('source'),
+  limits: { fileSize: 200 * 1024 * 1024 },
+  fileFilter: sourceFilter,
+}).single('source')
+
+export const uploadManifest = multer({
+  storage: makeStorage('manifests'),
+  limits: { fileSize: 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (path.extname(file.originalname).toLowerCase() === '.json') return cb(null, true)
+    cb(new AppError('manifest.json فقط', 400, 'INVALID_FILE_EXTENSION'))
+  },
+}).single('manifest')

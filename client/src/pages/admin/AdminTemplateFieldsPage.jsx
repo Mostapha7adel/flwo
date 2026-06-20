@@ -35,14 +35,14 @@ export default function AdminTemplateFieldsPage() {
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['template-fields', templateId],
-    queryFn: () => api.get(`/admin/templates/${templateId}/fields`).then(r => r.data),
+    queryFn: () => api.get(`/templates/${templateId}/fields`).then(r => r.data),
     enabled: !!templateId,
   })
 
   const fields = data?.data ?? data ?? []
 
   const createMutation = useMutation({
-    mutationFn: (payload) => api.post(`/admin/templates/${templateId}/fields`, payload),
+    mutationFn: (payload) => api.post(`/templates/${templateId}/fields`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['template-fields', templateId] })
       toast.success('تم إضافة الحقل بنجاح')
@@ -52,7 +52,7 @@ export default function AdminTemplateFieldsPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }) => api.put(`/admin/fields/${id}`, payload),
+    mutationFn: ({ id, payload }) => api.put(`/templates/fields/${id}`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['template-fields', templateId] })
       toast.success('تم تحديث الحقل بنجاح')
@@ -62,7 +62,7 @@ export default function AdminTemplateFieldsPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/admin/fields/${id}`),
+    mutationFn: (id) => api.delete(`/templates/fields/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['template-fields', templateId] })
       toast.success('تم حذف الحقل')
@@ -71,7 +71,7 @@ export default function AdminTemplateFieldsPage() {
   })
 
   const reorderMutation = useMutation({
-    mutationFn: (orderedIds) => api.put(`/admin/templates/${templateId}/fields/reorder`, { orderedIds }),
+    mutationFn: (orderedIds) => api.put(`/templates/${templateId}/fields/reorder`, { orderedIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['template-fields', templateId] })
       toast.success('تم إعادة الترتيب')

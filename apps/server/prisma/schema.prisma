@@ -112,6 +112,7 @@ model Template {
   defaultColors Json
   components    Json
   configSchema  Json?
+  manifest      Json?
   gallery       String[]
   videoUrl      String?
   features      Json?
@@ -120,6 +121,7 @@ model Template {
   deploymentType String? @db.VarChar(20)
   deploymentScript String? @db.Text
   sourceUrl     String?  @db.Text
+  sourceFile    String?  @db.Text
   sortOrder     Int      @default(0)
   deletedAt     DateTime?
   createdAt     DateTime @default(now())
@@ -149,6 +151,8 @@ model TemplateVersion {
   fileUrl    String   @db.Text
   fileSize   Int      @default(0)
   isCurrent  Boolean  @default(false)
+  channel    String   @default("stable") @db.VarChar(10)
+  compatibleWith String? @db.VarChar(20)
   createdAt  DateTime @default(now())
 
   @@unique([templateId, version])
@@ -218,6 +222,9 @@ model CustomerProject {
   config     Json
   previewUrl String?  @db.Text
   publishedUrl String? @db.Text
+  currentVersion String? @db.VarChar(20)
+  availableVersion String? @db.VarChar(20)
+  updateStatus String @default("up_to_date") @db.VarChar(15)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

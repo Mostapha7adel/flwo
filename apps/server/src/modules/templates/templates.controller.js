@@ -2,6 +2,8 @@ import { success, created, paginated } from '../../lib/response.js'
 import * as templatesService from './templates.service.js'
 import { getPagination } from '../../lib/pagination.js'
 import { toPublicUrl } from '../../middleware/upload.js'
+import { parseManifest, applyManifest } from './manifest.service.js'
+import fs from 'fs'
 
 export async function listPublished(req, res, next) {
   try {
@@ -50,7 +52,7 @@ export async function create(req, res, next) {
   try {
     const previewUrl = toPublicUrl(req.file?.path)
     const template = await templatesService.createTemplate(req.validatedData, previewUrl)
-    created(res, template)
+    if (template) created(res, template)
   } catch (err) { next(err) }
 }
 
@@ -73,5 +75,31 @@ export async function publish(req, res, next) {
   try {
     const template = await templatesService.togglePublish(req.params.id)
     success(res, template)
+  } catch (err) { next(err) }
+}
+
+export async function uploadManifestFile(req, res, next) {
+  try {
+    if (!req.file) throw new AppError('manifest.json مطلوب', 400, 'FILE_REQUIRED')
+    const content = fs.readFileSync(req.file.path, 'utf-8')
+    const manifest = parseManifest(content)
+    const result = await applyManifest(req.params.id, manifest)
+    fs.unlinkSync(req.file.path)
+    success(res, {
+      manifest: result,
+      templateType: manifest.type,
+      framework: manifest.framework,
+      deploymentType: manifest.deployment,
+      fieldsCount: manifest.fields.length,
+    }, 'تم رفع وتطبيق manifest.json')
+  } catch (err) { next(err) }
+}
+
+export async function uploadSourceCode(req, res, next) {
+  try {
+    if (!req.file) throw new AppError('ملف المصدر مطلوب', 400, 'FILE_REQUIRED')
+    const sourcePath = req.file.path
+    await templatesService.updateTemplate(req.params.id, {}, null, sourcePath)
+    success(res, { sourceFile: toPublicUrl(sourcePath) }, 'تم رفع الكود المصدري')
   } catch (err) { next(err) }
 }

@@ -22,7 +22,16 @@ export const createTemplateSchema = z.object({
     }))
   }),
   isPublished: z.boolean().default(false),
-  sortOrder: z.number().default(0)
+  sortOrder: z.number().default(0),
+  configSchema: z.any().optional(),
+  deploymentType: z.string().optional(),
+  deploymentScript: z.string().optional(),
+  sourceUrl: z.string().optional(),
+  gallery: z.array(z.string()).optional(),
+  videoUrl: z.string().optional(),
+  features: z.any().optional(),
+  templateType: z.string().optional(),
+  framework: z.string().optional(),
 })
 
 export const updateTemplateSchema = createTemplateSchema.partial()

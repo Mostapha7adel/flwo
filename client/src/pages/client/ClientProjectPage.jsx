@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { ArrowRight, Eye, Rocket, Upload, Save } from 'lucide-react'
+import { ArrowRight, Eye, Rocket, Upload, Save, Download, RefreshCw, AlertTriangle } from 'lucide-react'
 import { api } from '../../lib/axios'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -11,6 +11,7 @@ import { Textarea } from '../../components/ui/Textarea'
 import { Tabs } from '../../components/ui/Tabs'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { Spinner } from '../../components/ui/Spinner'
+import { Badge } from '../../components/ui/Badge'
 
 const TABS = [
   { key: 'brand', label: 'العلامة التجارية' },
@@ -65,6 +66,9 @@ export default function ClientProjectPage() {
   })
 
   const [projectId, setProjectId] = useState(null)
+  const [sourceDownloading, setSourceDownloading] = useState(false)
+  const [updateAvailable, setUpdateAvailable] = useState(false)
+  const [livePreviewUrl, setLivePreviewUrl] = useState(null)
 
   const { data: orderData, isLoading: orderLoading } = useQuery({
     queryKey: ['order', orderId],
@@ -93,7 +97,42 @@ export default function ClientProjectPage() {
     if (projectData?.config) {
       setConfig(prev => ({ ...prev, ...projectData.config }))
     }
+    if (projectData?.publishedUrl) {
+      setLivePreviewUrl(projectData.publishedUrl)
+    }
   }, [projectData])
+
+  useEffect(() => {
+    const projectVersion = projectData?.currentVersion
+    const latestVersion = projectData?.template?.versions?.[0]?.version
+    if (projectVersion && latestVersion) {
+      setUpdateAvailable(projectVersion !== latestVersion)
+    }
+  }, [projectData])
+
+  const handleSourceDownload = async () => {
+    setSourceDownloading(true)
+    try {
+      const { data } = await api.get(`/orders/${orderId}/project/source`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([data]))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `project-${projectId}.zip`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+      toast.success('تم تحميل الكود المصدري')
+    } catch {
+      toast.error('فشل تحميل الكود المصدري')
+    } finally {
+      setSourceDownloading(false)
+    }
+  }
+
+  const handleApplyUpdate = () => {
+    updateMutation.mutate()
+  }
 
   const createMutation = useMutation({
     mutationFn: () => api.post(`/orders/${orderId}/project`),
@@ -114,12 +153,14 @@ export default function ClientProjectPage() {
     onError: (err) => toast.error(err?.response?.data?.message || 'فشل حفظ التغييرات'),
   })
 
-  const publishMutation = useMutation({
-    mutationFn: () => api.put(`/orders/${orderId}/project/publish`),
+  const updateMutation = useMutation({
+    mutationFn: () => api.post(`/orders/${orderId}/project/apply-update`),
     onSuccess: () => {
-      toast.success('تم بدء النشر')
+      toast.success('تم تطبيق التحديث بنجاح')
+      setUpdateAvailable(false)
+      refetchProject()
     },
-    onError: (err) => toast.error(err?.response?.data?.message || 'فشل بدء النشر'),
+    onError: (err) => toast.error(err?.response?.data?.message || 'فشل تطبيق التحديث'),
   })
 
   const handleSave = () => {
@@ -265,10 +306,13 @@ export default function ClientProjectPage() {
                 <Button variant="secondary" onClick={handleSave} loading={saveMutation.isPending}>
                   <Save className="w-4 h-4" /> حفظ
                 </Button>
-                <Button variant="outline" onClick={() => window.open(`/preview/${projectId}`, '_blank')}>
+                <Button variant="secondary" onClick={handleSourceDownload} loading={sourceDownloading}>
+                  <Download className="w-4 h-4" /> المصدر
+                </Button>
+                <Button variant="outline" onClick={() => window.open(livePreviewUrl || `/preview/${projectId}`, '_blank')}>
                   <Eye className="w-4 h-4" /> معاينة
                 </Button>
-                <Button variant="primary" onClick={() => publishMutation.mutate()} loading={publishMutation.isPending}>
+                <Button variant="primary" onClick={() => navigate(`/dashboard/orders/${orderId}/deploy`)}>
                   <Rocket className="w-4 h-4" /> نشر
                 </Button>
               </>
@@ -276,6 +320,19 @@ export default function ClientProjectPage() {
           </div>
         }
       />
+
+      {updateAvailable && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+          <div className="flex-1">
+            <p className="font-semibold text-amber-800 text-sm">يتوفر تحديث للقالب</p>
+            <p className="text-xs text-amber-600">يمكنك تطبيق آخر التحديثات على مشروعك</p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={handleApplyUpdate}>
+            <RefreshCw className="w-4 h-4" /> تطبيق التحديث
+          </Button>
+        </div>
+      )}
 
       {!projectId ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
@@ -403,6 +460,23 @@ export default function ClientProjectPage() {
               </Button>
             </div>
           </div>
+
+          {livePreviewUrl && (
+            <div className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <Eye className="w-5 h-5 text-brand-500" /> المعاينة المباشرة
+              </h3>
+              <div className="rounded-xl overflow-hidden border border-gray-200">
+                <iframe
+                  src={livePreviewUrl}
+                  title="Live preview"
+                  className="w-full h-[600px]"
+                  sandbox="allow-scripts allow-same-origin allow-forms"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

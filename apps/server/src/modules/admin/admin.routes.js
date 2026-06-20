@@ -5,7 +5,7 @@ import { z } from 'zod'
 import bcrypt from 'bcryptjs'
 import { authenticate, requireRole } from '../../middleware/auth.js'
 import { validate } from '../../middleware/validate.js'
-import { uploadTemplateImage, uploadMedia, validateFileContent, toPublicUrl } from '../../middleware/upload.js'
+import { uploadTemplateImage, uploadMedia, uploadManifest, uploadSource, validateFileContent, toPublicUrl } from '../../middleware/upload.js'
 import { prisma } from '../../config/database.js'
 import { AppError } from '../../lib/AppError.js'
 import { signAccessToken, signRefreshToken } from '../../lib/jwt.js'
@@ -329,6 +329,8 @@ router.post('/templates', uploadLimiter, uploadTemplateImage, validateFileConten
 router.put('/templates/:id', uploadLimiter, uploadTemplateImage, validateFileContent, validate(updateTemplateSchema), templatesCtrl.update)
 router.delete('/templates/:id', templatesCtrl.remove)
 router.patch('/templates/:id/publish', templatesCtrl.publish)
+router.post('/templates/:id/manifest', uploadLimiter, uploadManifest, templatesCtrl.uploadManifestFile)
+router.post('/templates/:id/source', uploadLimiter, uploadSource, templatesCtrl.uploadSourceCode)
 
 router.get('/landing', landingCtrl.getContent)
 

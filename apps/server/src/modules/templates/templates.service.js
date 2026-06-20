@@ -89,11 +89,13 @@ export async function getAllTemplates({ page = 1, limit = 20 }) {
   return { templates, total, page, totalPages: Math.ceil(total / limit) }
 }
 
-export async function createTemplate(data, previewUrl) {
+export async function createTemplate(data, previewUrl, sourceFile) {
+  const { manifest, ...rest } = data
   const template = await prisma.template.create({
     data: {
-      ...data,
+      ...rest,
       previewUrl,
+      sourceFile: sourceFile || undefined,
       price: parseFloat(data.price),
     }
   })
@@ -101,9 +103,11 @@ export async function createTemplate(data, previewUrl) {
   return template
 }
 
-export async function updateTemplate(id, data, previewUrl) {
-  const updateData = { ...data }
+export async function updateTemplate(id, data, previewUrl, sourceFile) {
+  const { manifest, ...rest } = data
+  const updateData = { ...rest }
   if (previewUrl) updateData.previewUrl = previewUrl
+  if (sourceFile) updateData.sourceFile = sourceFile
 
   const template = await prisma.template.update({
     where: { id },
