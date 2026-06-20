@@ -165,3 +165,12 @@ export const uploadManifest = multer({
     cb(new AppError('manifest.json فقط', 400, 'INVALID_FILE_EXTENSION'))
   },
 }).single('manifest')
+
+export const uploadTemplateZip = multer({
+  storage: makeStorage('templates-preview'),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (path.extname(file.originalname).toLowerCase() === '.zip') return cb(null, true)
+    cb(new AppError('ZIP فقط', 400, 'INVALID_FILE_EXTENSION'))
+  },
+}).single('htmlZip')

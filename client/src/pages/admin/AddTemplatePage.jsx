@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { Upload, Image, Plus, X, FileJson, FileArchive } from 'lucide-react'
+import { Upload, Image, Plus, X, FileJson, FileArchive, FileCode } from 'lucide-react'
 import { api } from '../../lib/axios'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -54,6 +54,7 @@ export default function AddTemplatePage() {
   const [manifestUploading, setManifestUploading] = useState(false)
   const [sourceFileName, setSourceFileName] = useState('')
   const [sourceUploading, setSourceUploading] = useState(false)
+  const [previewZipUploading, setPreviewZipUploading] = useState(false)
 
   useEffect(() => {
     if (editData) {
@@ -153,6 +154,23 @@ export default function AddTemplatePage() {
     }
   }
 
+  const handlePreviewZipUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !id) return
+    const form = new FormData()
+    form.append('htmlZip', file)
+    setPreviewZipUploading(true)
+    try {
+      const { data } = await api.post(`/admin/templates/${id}/preview-zip`, form)
+      setPreviewUrl(data.previewUrl)
+      toast.success('تم رفع وفك ضغط ملف المعاينة')
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'فشل رفع ملف المعاينة')
+    } finally {
+      setPreviewZipUploading(false)
+    }
+  }
+
   const mutation = useMutation({
     mutationFn: (payload) => {
       const url = isEdit ? `/admin/templates/${id}` : '/admin/templates'
@@ -246,16 +264,28 @@ export default function AddTemplatePage() {
             <h3 className="font-bold text-gray-900">المعلومات الأساسية</h3>
             <Input label="عنوان القالب" value={title} onChange={(e) => setTitle(e.target.value)} />
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">صورة المعاينة</label>
-              <div className="flex items-center gap-4">
-                {previewUrl && (
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">معاينة القالب</label>
+              <div className="flex items-center gap-4 mb-3">
+                {previewUrl && !previewUrl.endsWith('.html') && (
                   <img src={previewUrl} alt="" className="w-24 h-24 rounded-xl object-cover border" />
                 )}
+                {previewUrl && previewUrl.endsWith('.html') && (
+                  <div className="w-24 h-24 rounded-xl border bg-gray-50 flex items-center justify-center text-xs text-gray-400">
+                    HTML
+                  </div>
+                )}
                 <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm text-gray-600">
-                  <Upload className="w-4 h-4" />
-                  اختر صورة
+                  <Image className="w-4 h-4" />
+                  صورة
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </label>
+                {isEdit && (
+                  <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm text-gray-600">
+                    <FileCode className="w-4 h-4" />
+                    {previewZipUploading ? 'جاري الرفع...' : 'ملف ZIP (HTML/CSS)'}
+                    <input type="file" accept=".zip" className="hidden" onChange={handlePreviewZipUpload} disabled={previewZipUploading} />
+                  </label>
+                )}
                 {previewUrl && (
                   <button onClick={() => setPreviewUrl('')} className="text-sm text-red-500 hover:underline">إزالة</button>
                 )}

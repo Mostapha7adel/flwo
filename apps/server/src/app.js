@@ -84,6 +84,11 @@ if (fs.existsSync('/data/uploads')) {
 }
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')))
 
+const previewDir = path.resolve(__dirname, '../uploads/templates-preview')
+if (fs.existsSync(previewDir)) {
+  app.use('/uploads/templates-preview', express.static(previewDir, { maxAge: 0 }))
+}
+
 const clientDist = path.resolve(__dirname, '../../../client/dist')
 if (fs.existsSync(path.join(clientDist, 'index.html'))) {
   app.use(express.static(clientDist))

@@ -122,6 +122,16 @@ export default function TemplatePreviewPage() {
                     loading="lazy"
                   />
                 </div>
+              ) : template.previewUrl?.endsWith('.html') ? (
+                <div className={`${view === 'mobile' ? 'max-w-[375px] mx-auto' : ''}`}>
+                  <iframe
+                    src={template.previewUrl}
+                    className="w-full h-96 border-0"
+                    title="معاينة القالب"
+                    sandbox="allow-scripts allow-same-origin"
+                    loading="lazy"
+                  />
+                </div>
               ) : (
                 <div className="h-96 bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center">
                   {template.previewUrl ? (

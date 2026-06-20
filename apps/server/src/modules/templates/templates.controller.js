@@ -1,9 +1,15 @@
+import path from 'path'
+import { fileURLToPath } from 'url'
+import AdmZip from 'adm-zip'
 import { success, created, paginated } from '../../lib/response.js'
 import * as templatesService from './templates.service.js'
 import { getPagination } from '../../lib/pagination.js'
 import { toPublicUrl } from '../../middleware/upload.js'
+import { AppError } from '../../lib/AppError.js'
 import { parseManifest, applyManifest } from './manifest.service.js'
 import fs from 'fs'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export async function listPublished(req, res, next) {
   try {
@@ -101,5 +107,29 @@ export async function uploadSourceCode(req, res, next) {
     const sourcePath = req.file.path
     await templatesService.updateTemplate(req.params.id, {}, null, sourcePath)
     success(res, { sourceFile: toPublicUrl(sourcePath) }, 'تم رفع الكود المصدري')
+  } catch (err) { next(err) }
+}
+
+export async function uploadPreviewZip(req, res, next) {
+  try {
+    if (!req.file) throw new AppError('ملف ZIP مطلوب', 400, 'FILE_REQUIRED')
+
+    const previewDir = path.resolve(__dirname, '../../../uploads/templates-preview', req.params.id)
+    if (!fs.existsSync(previewDir)) fs.mkdirSync(previewDir, { recursive: true })
+
+    const zip = new AdmZip(req.file.path)
+    zip.extractAllTo(previewDir, true)
+
+    const expectedPath = path.join(previewDir, 'index.html')
+    if (!fs.existsSync(expectedPath)) {
+      fs.rmSync(previewDir, { recursive: true, force: true })
+      throw new AppError('الملف المضغوط يجب أن يحتوي على index.html في الجذر', 400, 'MISSING_INDEX_HTML')
+    }
+
+    const previewUrl = `/uploads/templates-preview/${req.params.id}/index.html`
+    await templatesService.updateTemplate(req.params.id, {}, previewUrl)
+
+    fs.unlinkSync(req.file.path)
+    success(res, { previewUrl }, 'تم رفع وفك ضغط ملف القالب')
   } catch (err) { next(err) }
 }
