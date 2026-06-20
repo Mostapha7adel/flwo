@@ -51,6 +51,7 @@ export const Navbar = memo(function Navbar() {
 
         <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
           <li><Link to="/templates" className="hover:text-brand-500 transition-colors">القوالب</Link></li>
+          <li><Link to="/#pricing" className="hover:text-brand-500 transition-colors">الاستضافة</Link></li>
           <li><Link to="/about" className="hover:text-brand-500 transition-colors">عننا</Link></li>
           <li><Link to="/contact" className="hover:text-brand-500 transition-colors">تواصل معنا</Link></li>
         </ul>
@@ -86,6 +87,7 @@ export const Navbar = memo(function Navbar() {
         <div className="md:hidden bg-white border-b shadow-lg animate-fade-in">
           <div className="px-6 py-4 space-y-3">
             <Link to="/templates" className="block py-2 text-gray-700 hover:text-brand-500" onClick={() => setMenuOpen(false)}>القوالب</Link>
+            <Link to="/#pricing" className="block py-2 text-gray-700 hover:text-brand-500" onClick={() => setMenuOpen(false)}>الاستضافة</Link>
             <Link to="/about" className="block py-2 text-gray-700 hover:text-brand-500" onClick={() => setMenuOpen(false)}>عننا</Link>
             <Link to="/contact" className="block py-2 text-gray-700 hover:text-brand-500" onClick={() => setMenuOpen(false)}>تواصل معنا</Link>
             <div className="pt-3 border-t space-y-2">

@@ -37,6 +37,7 @@ export function Footer() {
             <h4 className="font-bold text-white mb-4">روابط سريعة</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/templates" className="hover:text-brand-400 transition">القوالب</Link></li>
+              <li><Link to="/#pricing" className="hover:text-brand-400 transition">الاستضافة</Link></li>
               <li><Link to="/about" className="hover:text-brand-400 transition">عن Templyn</Link></li>
               <li><Link to="/contact" className="hover:text-brand-400 transition">تواصل معنا</Link></li>
             </ul>

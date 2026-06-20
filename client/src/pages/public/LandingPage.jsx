@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, ArrowLeft, Play, CheckCircle, Palette, Zap, Shield, MessageCircle, Smartphone, Infinity as InfinityIcon, Star, Loader, X, Server } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { Sparkles, ArrowLeft, Play, CheckCircle, Palette, Zap, Shield, MessageCircle, Smartphone, Infinity as InfinityIcon, Star, Loader, X, Server, CreditCard, Building, Wallet } from 'lucide-react'
+import { useQuery, useMutation } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
 import { Button } from '../../components/ui/Button'
+import { Modal } from '../../components/ui/Modal'
+import { Badge } from '../../components/ui/Badge'
 import { api } from '../../lib/axios'
+import { useAuthStore } from '../../store/authStore'
 
 const ICON_MAP = { Palette, Zap, Shield, MessageCircle, Smartphone, Infinity: InfinityIcon, Sparkles, Star }
 
@@ -294,12 +298,54 @@ function FeaturesSection({ content }) {
 
 function ServerPlansSection() {
   const navigate = useNavigate()
+  const user = useAuthStore(s => s.user)
+  const [bookingPlan, setBookingPlan] = useState(null)
+  const [billingCycle, setBillingCycle] = useState('MONTHLY')
+  const [paymentMethod, setPaymentMethod] = useState('')
+  const [step, setStep] = useState('plan')
+
   const { data: plansData, isLoading } = useQuery({
     queryKey: ['landing-server-plans'],
     queryFn: () => api.get('/server-plans').then(r => r.data),
   })
 
   const plans = plansData?.data ?? plansData ?? []
+
+  const bookMutation = useMutation({
+    mutationFn: (payload) => {
+      if (!user) { navigate('/login'); return Promise.reject() }
+      return api.post('/server-subscriptions/direct', payload)
+    },
+    onSuccess: () => {
+      toast.success('تم الحجز بنجاح! تم تفعيل اشتراكك')
+      setBookingPlan(null)
+      setStep('plan')
+      setPaymentMethod('')
+    },
+    onError: (err) => {
+      if (err?.response) toast.error(err?.response?.data?.message || 'فشل الحجز')
+    },
+  })
+
+  const handleBook = () => {
+    if (!user) { navigate('/login'); return }
+    if (!paymentMethod) { toast.error('يرجى اختيار وسيلة الدفع'); return }
+    bookMutation.mutate({ planId: bookingPlan.id, billingCycle })
+  }
+
+  const openBooking = (plan) => {
+    if (!user) { navigate('/login'); return }
+    setBookingPlan(plan)
+    setBillingCycle('MONTHLY')
+    setPaymentMethod('')
+    setStep('plan')
+  }
+
+  const PAYMENT_METHODS = [
+    { id: 'bank', label: 'تحويل بنكي', icon: Building },
+    { id: 'card', label: 'بطاقة فيزا/ماستركارد', icon: CreditCard },
+    { id: 'wallet', label: 'محفظة إلكترونية', icon: Wallet },
+  ]
 
   if (plans.length === 0) return null
 
@@ -329,13 +375,74 @@ function ServerPlansSection() {
                   ))}
                 </ul>
               )}
-              <Button className="w-full" variant={plans.indexOf(plan) === 1 ? 'primary' : 'outline'} onClick={() => navigate('/register')}>
-                ابدأ الآن
+              <Button className="w-full" variant={plans.indexOf(plan) === 1 ? 'primary' : 'outline'} onClick={() => openBooking(plan)}>
+                احجز الآن
               </Button>
             </div>
           ))}
         </div>
       </div>
+
+      <Modal open={!!bookingPlan} onClose={() => { setBookingPlan(null); setStep('plan') }} title="حجز باقة استضافة" size="lg">
+        {step === 'plan' && bookingPlan && (
+          <div className="space-y-6">
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h3 className="font-bold text-gray-900 text-lg">{bookingPlan.name}</h3>
+              <div className="flex gap-3 mt-3">
+                <button
+                  className={`flex-1 py-3 px-4 rounded-xl border-2 text-center transition-all ${
+                    billingCycle === 'MONTHLY'
+                      ? 'border-brand-500 bg-brand-50 text-brand-700 font-bold'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                  onClick={() => setBillingCycle('MONTHLY')}
+                >
+                  <span className="text-lg font-bold">${Number(bookingPlan.monthlyPrice).toFixed(2)}</span>
+                  <span className="text-sm block">شهرياً</span>
+                </button>
+                <button
+                  className={`flex-1 py-3 px-4 rounded-xl border-2 text-center transition-all ${
+                    billingCycle === 'YEARLY'
+                      ? 'border-brand-500 bg-brand-50 text-brand-700 font-bold'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                  onClick={() => setBillingCycle('YEARLY')}
+                >
+                  <span className="text-lg font-bold">${Number(bookingPlan.yearlyPrice).toFixed(2)}</span>
+                  <span className="text-sm block">سنوياً</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">اختر وسيلة الدفع</h4>
+              <div className="grid gap-3">
+                {PAYMENT_METHODS.map(pm => (
+                  <label
+                    key={pm.id}
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      paymentMethod === pm.id ? 'border-brand-500 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <input type="radio" name="payment" value={pm.id} checked={paymentMethod === pm.id} onChange={(e) => setPaymentMethod(e.target.value)} className="sr-only" />
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <pm.icon className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-900">{pm.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="secondary" type="button" onClick={() => { setBookingPlan(null); setStep('plan') }}>إلغاء</Button>
+              <Button onClick={handleBook} loading={bookMutation.isPending}>
+                تأكيد الحجز
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </section>
   )
 }

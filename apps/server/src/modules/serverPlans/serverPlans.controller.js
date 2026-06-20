@@ -59,6 +59,13 @@ export async function createSubscription(req, res, next) {
   } catch (err) { next(err) }
 }
 
+export async function createDirectSubscription(req, res, next) {
+  try {
+    const sub = await service.createDirectSubscription(req.user.id, req.validatedData)
+    created(res, sub)
+  } catch (err) { next(err) }
+}
+
 export async function getAllSubscriptions(req, res, next) {
   try {
     const { page, limit } = getPagination(req.query)

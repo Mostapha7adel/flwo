@@ -9,6 +9,7 @@ const router = Router()
 router.get('/server-plans', ctrl.listActivePlans)
 
 router.post('/server-subscriptions', authenticate, validate(createSubscriptionSchema), ctrl.createSubscription)
+router.post('/server-subscriptions/direct', authenticate, validate(createSubscriptionSchema), ctrl.createDirectSubscription)
 router.get('/server-subscriptions', authenticate, ctrl.listUserSubscriptions)
 router.get('/server-subscriptions/:id', authenticate, ctrl.getSubscriptionById)
 

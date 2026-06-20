@@ -93,6 +93,71 @@ export async function createSubscription(userId, data) {
   return sub
 }
 
+export async function createDirectSubscription(userId, data) {
+  const plan = await getPlanById(data.planId)
+  if (!plan.isActive) throw new AppError('الباقة غير متاحة حالياً', 400, 'PLAN_INACTIVE')
+
+  const existing = await prisma.serverSubscription.findFirst({
+    where: { userId, status: { in: ['PENDING', 'ACTIVE'] } },
+    orderBy: { createdAt: 'desc' },
+  })
+  if (existing) {
+    if (existing.status === 'PENDING') {
+      throw new AppError('لديك طلب اشتراك معلق بالفعل', 409, 'PENDING_SUBSCRIPTION')
+    }
+    const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+    if (existing.endDate && existing.endDate > threeDaysFromNow) {
+      throw new AppError('لا يمكنك الاشتراك إلا قبل 3 أيام من انتهاء الاشتراك الحالي', 409, 'ACTIVE_SUBSCRIPTION')
+    }
+  }
+
+  const price = data.billingCycle === 'YEARLY' ? plan.yearlyPrice : plan.monthlyPrice
+  const now = new Date()
+  const endDate = new Date(now.getTime() + (data.billingCycle === 'YEARLY' ? 365 : 30) * 24 * 60 * 60 * 1000)
+
+  const sub = await prisma.serverSubscription.create({
+    data: {
+      userId,
+      planId: data.planId,
+      billingCycle: data.billingCycle,
+      price,
+      status: 'ACTIVE',
+      startDate: now,
+      endDate,
+    },
+    include: { plan: true },
+  })
+
+  try {
+    await prisma.notification.create({
+      data: {
+        userId,
+        title: 'تم تفعيل اشتراكك',
+        body: `تم تفعيل اشتراكك في باقة ${plan.name} لمدة ${data.billingCycle === 'YEARLY' ? 'سنة' : 'شهر'} بنجاح`,
+        type: 'SUBSCRIPTION_ACTIVATED',
+        link: '/dashboard/subscriptions',
+      },
+    })
+  } catch (_) {}
+
+  try {
+    const staff = await prisma.user.findMany({ where: { role: { in: STAFF_ROLES }, isActive: true }, select: { id: true } })
+    if (staff.length > 0) {
+      await prisma.notification.createMany({
+        data: staff.map(s => ({
+          userId: s.id,
+          title: 'اشتراك جديد (مدفوع)',
+          body: `اشتراك جديد في باقة ${plan.name} من ${sub.userId}`,
+          type: 'SUBSCRIPTION_PAID',
+          link: `/x9k2-manage/panel/server-subscriptions`,
+        })),
+      })
+    }
+  } catch (_) {}
+
+  return sub
+}
+
 export async function getAllSubscriptions({ page = 1, limit = 20 }) {
   const [subscriptions, total] = await Promise.all([
     prisma.serverSubscription.findMany({
