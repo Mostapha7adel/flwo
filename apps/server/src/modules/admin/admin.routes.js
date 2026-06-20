@@ -258,10 +258,14 @@ router.get('/orders', async (req, res, next) => {
   try {
     const { page, limit } = getPagination(req.query)
     const status = req.query.status
-    const where = status ? { status } : {}
-    const [orders, total] = await Promise.all([
-      prisma.order.findMany({
-        where,
+    const typeFilter = req.query.type // 'ORDER' | 'SUBSCRIPTION' | undefined
+
+    const orderWhere = status && (!typeFilter || typeFilter === 'ORDER') ? { status } : {}
+    const subWhere = status && (!typeFilter || typeFilter === 'SUBSCRIPTION') ? { status } : {}
+
+    const [orders, subRows, totalOrders, totalSubs] = await Promise.all([
+      typeFilter !== 'SUBSCRIPTION' ? prisma.order.findMany({
+        where: orderWhere,
         include: {
           user: { select: SAFE_USER_SELECT },
           template: { select: { id: true, title: true } }
@@ -269,10 +273,50 @@ router.get('/orders', async (req, res, next) => {
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip: (page - 1) * limit,
-      }),
-      prisma.order.count({ where })
+      }) : [],
+      typeFilter !== 'ORDER' ? prisma.serverSubscription.findMany({
+        where: subWhere,
+        include: {
+          user: { select: SAFE_USER_SELECT },
+          plan: { select: { id: true, name: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: (page - 1) * limit,
+      }) : [],
+      typeFilter !== 'SUBSCRIPTION' ? prisma.order.count({ where: orderWhere }) : 0,
+      typeFilter !== 'ORDER' ? prisma.serverSubscription.count({ where: subWhere }) : 0,
     ])
-    paginated(res, { orders, total, page, totalPages: Math.ceil(total / limit) }, total, page, limit)
+
+    const mapped = [
+      ...orders.map(o => ({
+        id: o.id,
+        type: 'ORDER',
+        orderNumber: o.orderNumber,
+        user: o.user,
+        item: o.template,
+        itemLabel: 'القالب',
+        totalAmount: Number(o.totalAmount),
+        status: o.status,
+        createdAt: o.createdAt,
+        notes: o.notes,
+      })),
+      ...subRows.map(s => ({
+        id: s.id,
+        type: 'SUBSCRIPTION',
+        orderNumber: `SUB-${s.id.slice(0, 8).toUpperCase()}`,
+        user: s.user,
+        item: s.plan,
+        itemLabel: 'الباقة',
+        totalAmount: Number(s.price),
+        status: s.status,
+        createdAt: s.createdAt,
+        notes: s.adminNotes,
+      })),
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+    const total = totalOrders + totalSubs
+    paginated(res, { orders: mapped, total, page, totalPages: Math.ceil(total / limit) }, total, page, limit)
   } catch (err) { next(err) }
 })
 

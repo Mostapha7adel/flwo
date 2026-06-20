@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Search, Download, MessageCircle } from 'lucide-react'
+import { Search, Download, MessageCircle, Server, Layout } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { Input } from '../../components/ui/Input'
@@ -13,12 +13,20 @@ import { api } from '../../lib/axios'
 import { ORDER_STATUS } from '../../utils/constants'
 import { STATUS_OPTIONS } from '../../utils/orderStatus'
 
-const statusConfig = {
+const orderStatusConfig = {
   PENDING: { label: 'قيد الانتظار', variant: 'warning' },
   ACCEPTED: { label: 'مقبول', variant: 'info' },
   IN_PROGRESS: { label: 'جاري التنفيذ', variant: 'accent' },
   COMPLETED: { label: 'مكتمل', variant: 'success' },
   CANCELLED: { label: 'ملغي', variant: 'danger' },
+}
+
+const subStatusConfig = {
+  PENDING: { label: 'معلق', variant: 'warning' },
+  ACTIVE: { label: 'نشط', variant: 'success' },
+  CANCELLED: { label: 'ملغي', variant: 'subtle' },
+  EXPIRED: { label: 'منتهي', variant: 'subtle' },
+  REJECTED: { label: 'مرفوض', variant: 'error' },
 }
 
 const statusFilterOptions = [
@@ -54,10 +62,11 @@ export default function AdminOrdersPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['admin-orders', statusFilter],
-    queryFn: () => api.get('/admin/orders', { params: { status: statusFilter || undefined, page: 1, limit: 100 } }).then(r => r.data),
+    queryKey: ['admin-orders', statusFilter, typeFilter],
+    queryFn: () => api.get('/admin/orders', { params: { status: statusFilter || undefined, type: typeFilter || undefined, page: 1, limit: 100 } }).then(r => r.data),
   })
 
   const updateStatus = useMutation({
@@ -84,8 +93,9 @@ export default function AdminOrdersPage() {
     if (!search) return true
     const q = search.toLowerCase()
     const clientName = `${o.user?.firstName || ''} ${o.user?.lastName || ''}`.toLowerCase()
-    const templateTitle = o.template?.title?.toLowerCase() || ''
-    return clientName.includes(q) || templateTitle.includes(q)
+    const itemTitle = o.item?.title || o.item?.name || ''
+    const orderNum = o.orderNumber?.toLowerCase() || ''
+    return clientName.includes(q) || itemTitle.toLowerCase().includes(q) || orderNum.includes(q)
   }), [orders, search])
 
   if (error) {
@@ -109,7 +119,14 @@ export default function AdminOrdersPage() {
 
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex-1 min-w-[200px]">
-          <Input placeholder="بحث..." icon={<Search className="w-4 h-4" />} value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="بحث باسم العميل أو القالب..." icon={<Search className="w-4 h-4" />} value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <div className="w-36">
+          <Select options={[
+            { value: '', label: 'النوع' },
+            { value: 'ORDER', label: 'قوالب' },
+            { value: 'SUBSCRIPTION', label: 'استضافة' },
+          ]} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} />
         </div>
         <div className="w-40">
           <Select options={statusFilterOptions} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} />
@@ -123,50 +140,70 @@ export default function AdminOrdersPage() {
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500">
-                  <th className="text-right py-3 px-4">#</th>
-                  <th className="text-right py-3 px-4">العميل</th>
-                  <th className="text-right py-3 px-4">القالب</th>
-                  <th className="text-right py-3 px-4">المبلغ</th>
-                  <th className="text-right py-3 px-4">التاريخ</th>
-                  <th className="text-right py-3 px-4">الحالة</th>
-                  <th className="text-right py-3 px-4">الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(order => {
-                  const cfg = statusConfig[order.status] || { label: order.status, variant: 'subtle' }
-                  return (
-                    <tr key={order.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">{order.id}</td>
-                      <td className="py-3 px-4">{order.user?.firstName} {order.user?.lastName}</td>
-                      <td className="py-3 px-4">{order.template?.title}</td>
-                      <td className="py-3 px-4 font-medium">${Number(order.totalAmount).toLocaleString()}</td>
-                      <td className="py-3 px-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString('ar-EG')}</td>
-                      <td className="py-3 px-4"><Badge variant={cfg.variant}>{cfg.label}</Badge></td>
-                      <td className="py-3 px-4">
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="ghost" onClick={() => navigate(`/x9k2-manage/panel/orders/${order.id}`)}>عرض</Button>
-                          <Button size="sm" variant="ghost" onClick={() => openChat(order.id)}><MessageCircle className="w-4 h-4" /> محادثة</Button>
-                          <Select
-                            options={[{ value: '', label: 'تغيير الحالة' }, ...statusChangeOptions]}
-                            className="w-32"
-                            value=""
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                updateStatus.mutate({ id: order.id, status: e.target.value })
-                              }
-                            }}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-500">
+                    <th className="text-right py-3 px-4">#</th>
+                    <th className="text-right py-3 px-4">النوع</th>
+                    <th className="text-right py-3 px-4">العميل</th>
+                    <th className="text-right py-3 px-4">التفاصيل</th>
+                    <th className="text-right py-3 px-4">المبلغ</th>
+                    <th className="text-right py-3 px-4">التاريخ</th>
+                    <th className="text-right py-3 px-4">الحالة</th>
+                    <th className="text-right py-3 px-4">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(order => {
+                    const isSub = order.type === 'SUBSCRIPTION'
+                    const cfg = isSub
+                      ? (subStatusConfig[order.status] || { label: order.status, variant: 'subtle' })
+                      : (orderStatusConfig[order.status] || { label: order.status, variant: 'subtle' })
+                    return (
+                      <tr key={`${order.type}-${order.id}`} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 font-medium text-xs">{order.orderNumber || order.id.slice(0, 8)}</td>
+                        <td className="py-3 px-4">
+                          <Badge variant={isSub ? 'accent' : 'info'}>
+                            {isSub ? <><Server className="w-3 h-3 inline ml-1" />استضافة</> : <><Layout className="w-3 h-3 inline ml-1" />قالب</>}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm font-medium">{order.user?.firstName} {order.user?.lastName}</div>
+                          <div className="text-xs text-gray-400">{order.user?.email}</div>
+                        </td>
+                        <td className="py-3 px-4">{order.item?.title || order.item?.name || '—'}</td>
+                        <td className="py-3 px-4 font-medium">${Number(order.totalAmount).toLocaleString()}</td>
+                        <td className="py-3 px-4 text-gray-500 text-xs">{new Date(order.createdAt).toLocaleDateString('ar-EG')}</td>
+                        <td className="py-3 px-4"><Badge variant={cfg.variant}>{cfg.label}</Badge></td>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-2">
+                            {isSub ? (
+                              <Button size="sm" variant="ghost" onClick={() => navigate(`/x9k2-manage/panel/server-subscriptions`)}>
+                                عرض الاشتراك
+                              </Button>
+                            ) : (
+                              <>
+                                <Button size="sm" variant="ghost" onClick={() => navigate(`/x9k2-manage/panel/orders/${order.id}`)}>عرض</Button>
+                                <Button size="sm" variant="ghost" onClick={() => openChat(order.id)}><MessageCircle className="w-3.5 h-3.5" /></Button>
+                                <Select
+                                  options={[{ value: '', label: 'تغيير الحالة' }, ...statusChangeOptions]}
+                                  className="w-28"
+                                  value=""
+                                  onChange={(e) => {
+                                    if (e.target.value) {
+                                      updateStatus.mutate({ id: order.id, status: e.target.value })
+                                    }
+                                  }}
+                                />
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
           </div>
         </div>
       )}
