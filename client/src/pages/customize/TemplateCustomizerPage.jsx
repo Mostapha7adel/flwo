@@ -106,7 +106,7 @@ export default function TemplateCustomizerPage() {
       navigate(`/dashboard/orders/${data.id}?success=true`)
       toast.success('تم إرسال طلبك بنجاح!')
     } catch (err) {
-      toast.error(err?.response?.data?.error || 'حدث خطأ، حاول مجدداً')
+      toast.error(err?.response?.data?.message || 'حدث خطأ، حاول مجدداً')
     } finally {
       setSubmitting(false)
     }
