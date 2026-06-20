@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, ArrowLeft, Play, CheckCircle, Palette, Zap, Shield, MessageCircle, Smartphone, Infinity as InfinityIcon, Star, Loader, X } from 'lucide-react'
+import { Sparkles, ArrowLeft, Play, CheckCircle, Palette, Zap, Shield, MessageCircle, Smartphone, Infinity as InfinityIcon, Star, Loader, X, Server } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../../components/ui/Button'
 import { api } from '../../lib/axios'
@@ -292,6 +292,54 @@ function FeaturesSection({ content }) {
   )
 }
 
+function ServerPlansSection() {
+  const navigate = useNavigate()
+  const { data: plansData, isLoading } = useQuery({
+    queryKey: ['landing-server-plans'],
+    queryFn: () => api.get('/server-plans').then(r => r.data),
+  })
+
+  const plans = plansData?.data ?? plansData ?? []
+
+  if (plans.length === 0) return null
+
+  return (
+    <section className="py-20 bg-gray-900 text-white" id="pricing">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold">باقات الاستضافة</h2>
+          <p className="text-gray-400 mt-2">اختر الباقة المناسبة لاستضافة موقعك</p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          {plans.map((plan) => (
+            <div key={plan.id} className="bg-gray-800 rounded-2xl p-8 border border-gray-700 hover:border-brand-500/50 transition-all duration-300">
+              <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+              {plan.description && <p className="text-sm text-gray-400 mb-6">{plan.description}</p>}
+              <div className="mb-6">
+                <span className="text-4xl font-extrabold">${Number(plan.monthlyPrice).toFixed(0)}</span>
+                <span className="text-gray-400 text-sm mr-1">/شهر</span>
+              </div>
+              {plan.features?.length > 0 && (
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Button className="w-full" variant={plans.indexOf(plan) === 1 ? 'primary' : 'outline'} onClick={() => navigate('/register')}>
+                ابدأ الآن
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function TestimonialsSection({ content }) {
   const testimonials = content?.testimonials || []
 
@@ -335,6 +383,7 @@ export default function LandingPage() {
       <AboutPreviewSection content={content} />
       <HowItWorksSection content={content} />
       <FeaturesSection content={content} />
+      <ServerPlansSection />
       <TestimonialsSection content={content} />
     </>
   )

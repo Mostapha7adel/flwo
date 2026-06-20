@@ -13,6 +13,8 @@ import { hashToken } from '../auth/auth.service.js'
 
 import * as templatesCtrl from '../templates/templates.controller.js'
 import { createTemplateSchema, updateTemplateSchema } from '../templates/templates.schema.js'
+import * as serverPlansCtrl from '../serverPlans/serverPlans.controller.js'
+import { createPlanSchema, updatePlanSchema, updateSubscriptionSchema } from '../serverPlans/serverPlans.schema.js'
 import { loginSchema } from '../auth/auth.schema.js'
 import { adminLoginLimiter, uploadLimiter } from '../../middleware/rateLimiter.js'
 import { getPagination } from '../../lib/pagination.js'
@@ -580,5 +582,14 @@ router.get('/accounts/revenue-history', async (req, res, next) => {
 router.patch('/contact/:id/read', contactCtrl.adminToggleRead)
 router.patch('/contact/:id/status', contactCtrl.adminToggleStatus)
 router.delete('/contact/:id', contactCtrl.adminDelete)
+
+router.get('/server-plans', requireAdmin, serverPlansCtrl.getAllPlans)
+router.get('/server-plans/:id', requireAdmin, serverPlansCtrl.getPlanById)
+router.post('/server-plans', requireAdmin, validate(createPlanSchema), serverPlansCtrl.createPlan)
+router.put('/server-plans/:id', requireAdmin, validate(updatePlanSchema), serverPlansCtrl.updatePlan)
+router.delete('/server-plans/:id', requireAdmin, serverPlansCtrl.deletePlan)
+
+router.get('/server-subscriptions', requireAdmin, serverPlansCtrl.getAllSubscriptions)
+router.patch('/server-subscriptions/:id', requireAdmin, validate(updateSubscriptionSchema), serverPlansCtrl.updateSubscription)
 
 export default router

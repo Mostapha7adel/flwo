@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ShoppingBag, Palette, Monitor, MessageCircle, Mail, LogOut, X, Users, UserCog, Shield, DollarSign, Layers } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, Palette, Monitor, MessageCircle, Mail, LogOut, X, Users, UserCog, Shield, DollarSign, Layers, Server, CreditCard } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { cn } from '../../utils/cn'
 
@@ -9,6 +9,8 @@ const links = [
   { to: '/x9k2-manage/panel/users', icon: Users, label: 'المستخدمين' },
   { to: '/x9k2-manage/panel/chat', icon: MessageCircle, label: 'المحادثات' },
   { to: '/x9k2-manage/panel/templates', icon: Palette, label: 'القوالب' },
+  { to: '/x9k2-manage/panel/server-plans', icon: Server, label: 'باقات الاستضافة' },
+  { to: '/x9k2-manage/panel/server-subscriptions', icon: CreditCard, label: 'اشتراكات الاستضافة' },
   { to: '/x9k2-manage/panel/landing', icon: Monitor, label: 'تعديل Landing' },
   { to: '/x9k2-manage/panel/contact', icon: Mail, label: 'رسائل التواصل' },
 ]

@@ -51,6 +51,19 @@ enum SubscriptionTier {
   ENTERPRISE
 }
 
+enum ServerSubStatus {
+  PENDING
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  REJECTED
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
 model User {
   id           String   @id @default(cuid())
   firstName    String   @db.VarChar(50)
@@ -76,6 +89,7 @@ model User {
   subscription Subscription?
   templateReviews TemplateReview[]
   customerProjects CustomerProject[]
+  serverSubscriptions ServerSubscription[]
 
   @@index([email])
   @@index([phone])
@@ -412,6 +426,44 @@ model Subscription {
   updatedAt       DateTime         @updatedAt
 
   @@map("subscriptions")
+}
+
+model ServerPlan {
+  id            String               @id @default(cuid())
+  name          String               @db.VarChar(100)
+  description   String?              @db.Text
+  features      String[]
+  monthlyPrice  Decimal              @db.Decimal(10, 2)
+  yearlyPrice   Decimal              @db.Decimal(10, 2)
+  isActive      Boolean              @default(true)
+  sortOrder     Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  subscriptions ServerSubscription[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("server_plans")
+}
+
+model ServerSubscription {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId        String
+  plan          ServerPlan      @relation(fields: [planId], references: [id])
+  status        ServerSubStatus @default(PENDING)
+  billingCycle  BillingCycle    @default(MONTHLY)
+  price         Decimal         @db.Decimal(10, 2)
+  adminNotes    String?         @db.Text
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([userId, status])
+  @@map("server_subscriptions")
 }
 
 model Expense {

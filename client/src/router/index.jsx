@@ -37,7 +37,11 @@ const AdminAccountsPage = lazy(() => import('../pages/admin/AdminAccountsPage'))
 const AdminAccountingPage = lazy(() => import('../pages/admin/AdminAccountingPage'))
 const AdminTemplateVersionsPage = lazy(() => import('../pages/admin/AdminTemplateVersionsPage'))
 const AdminTemplateFieldsPage = lazy(() => import('../pages/admin/AdminTemplateFieldsPage'))
+const AdminTemplateAssetsPage = lazy(() => import('../pages/admin/AdminTemplateAssetsPage'))
+const AdminServerPlansPage = lazy(() => import('../pages/admin/AdminServerPlansPage'))
+const AdminServerSubscriptionsPage = lazy(() => import('../pages/admin/AdminServerSubscriptionsPage'))
 const ClientServersPage = lazy(() => import('../pages/client/ClientServersPage'))
+const ClientSubscriptionsPage = lazy(() => import('../pages/client/ClientSubscriptionsPage'))
 const ClientProjectPage = lazy(() => import('../pages/client/ClientProjectPage'))
 const ClientDeploymentsPage = lazy(() => import('../pages/client/ClientDeploymentsPage'))
 
@@ -69,6 +73,7 @@ const router = createBrowserRouter([
       { path: 'profile', element: <PageTransition><ClientProfilePage /></PageTransition> },
       { path: 'chat', element: <PageTransition><ClientChatPage /></PageTransition> },
       { path: 'servers', element: <PageTransition><ClientServersPage /></PageTransition> },
+      { path: 'subscriptions', element: <PageTransition><ClientSubscriptionsPage /></PageTransition> },
       { path: 'orders/:orderId/project', element: <PageTransition><ClientProjectPage /></PageTransition> },
       { path: 'orders/:orderId/deploy', element: <PageTransition><ClientDeploymentsPage /></PageTransition> },
     ]
@@ -103,9 +108,12 @@ const router = createBrowserRouter([
       { path: 'templates/edit/:id', element: <PageTransition><AddTemplatePage /></PageTransition> },
       { path: 'templates/:templateId/versions', element: <PageTransition><AdminTemplateVersionsPage /></PageTransition> },
       { path: 'templates/:templateId/fields', element: <PageTransition><AdminTemplateFieldsPage /></PageTransition> },
+      { path: 'templates/:templateId/assets', element: <PageTransition><AdminTemplateAssetsPage /></PageTransition> },
       { path: 'landing', element: <PageTransition><AdminLandingEditorPage /></PageTransition> },
       { path: 'chat', element: <PageTransition><AdminChatPage /></PageTransition> },
       { path: 'chat/:convId', element: <PageTransition><AdminChatPage /></PageTransition> },
+      { path: 'server-plans', element: <PageTransition><AdminServerPlansPage /></PageTransition> },
+      { path: 'server-subscriptions', element: <PageTransition><AdminServerSubscriptionsPage /></PageTransition> },
       { path: 'users', element: <PageTransition><AdminUsersPage /></PageTransition> },
       { path: 'contact', element: <PageTransition><AdminContactPage /></PageTransition> },
       { path: 'accounts', element: <PageTransition><AdminAccountsPage /></PageTransition> },

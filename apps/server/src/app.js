@@ -110,6 +110,10 @@ API_V1.use('/templates', fieldRoutes)
 API_V1.use('/templates', assetRoutes)
 API_V1.use('/templates', reviewRoutes)
 API_V1.use('/orders', projectRoutes)
+
+import serverPlansRoutes from './modules/serverPlans/serverPlans.routes.js'
+API_V1.use('/', serverPlansRoutes)
+
 API_V1.use(`/${config.ADMIN_ROUTE_HINT}`, adminRoutes)
 
 API_V1.get('/health', (req, res) => {
