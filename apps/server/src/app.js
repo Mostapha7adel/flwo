@@ -26,6 +26,10 @@ import notificationRoutes from './modules/notifications/notifications.routes.js'
 import versionRoutes from './modules/versions/versions.routes.js'
 import serverRoutes from './modules/servers/servers.routes.js'
 import deploymentRoutes from './modules/deployments/deployments.routes.js'
+import fieldRoutes from './modules/fields/fields.routes.js'
+import assetRoutes from './modules/assets/assets.routes.js'
+import reviewRoutes from './modules/reviews/reviews.routes.js'
+import projectRoutes from './modules/projects/projects.routes.js'
 
 const app = express()
 
@@ -102,6 +106,10 @@ API_V1.use('/notifications', notificationRoutes)
 API_V1.use('/templates', versionRoutes)
 API_V1.use('/servers', serverRoutes)
 API_V1.use('/orders', deploymentRoutes)
+API_V1.use('/templates', fieldRoutes)
+API_V1.use('/templates', assetRoutes)
+API_V1.use('/templates', reviewRoutes)
+API_V1.use('/orders', projectRoutes)
 API_V1.use(`/${config.ADMIN_ROUTE_HINT}`, adminRoutes)
 
 API_V1.get('/health', (req, res) => {

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { Plus, Star, ShoppingCart, MessageSquare, Layers, ListOrdered, Image as ImageIcon } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/axios'
 import { Button } from '../../components/ui/Button'
@@ -68,7 +68,38 @@ export default function AdminTemplatesPage() {
                 <h3 className="font-bold text-gray-900">{t.title}</h3>
                 <span className="font-bold text-brand-600">${t.price}</span>
               </div>
-              <Badge variant={t.isPublished ? 'success' : 'subtle'}>{t.isPublished ? 'منشور' : 'مخفي'}</Badge>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <Badge variant={t.isPublished ? 'success' : 'subtle'}>{t.isPublished ? 'منشور' : 'مخفي'}</Badge>
+                {t.avgRating > 0 && (
+                  <Badge variant="warning" className="flex items-center gap-1">
+                    <Star className="w-3 h-3" /> {Number(t.avgRating).toFixed(1)}
+                  </Badge>
+                )}
+                {t._count?.reviews > 0 && (
+                  <Badge variant="info" className="flex items-center gap-1">
+                    <MessageSquare className="w-3 h-3" /> {t._count.reviews}
+                  </Badge>
+                )}
+                {t._count?.orders > 0 && (
+                  <Badge variant="accent" className="flex items-center gap-1">
+                    <ShoppingCart className="w-3 h-3" /> {t._count.orders}
+                  </Badge>
+                )}
+              </div>
+              {t.description && (
+                <p className="text-sm text-gray-500 mb-3 line-clamp-2">{t.description}</p>
+              )}
+              <div className="flex flex-wrap gap-2 mt-3 mb-3">
+                <Button size="sm" variant="outline" className="text-xs" onClick={() => navigate(`/x9k2-manage/panel/templates/${t.id}/versions`)}>
+                  <Layers className="w-3 h-3" /> إصدارات
+                </Button>
+                <Button size="sm" variant="outline" className="text-xs" onClick={() => navigate(`/x9k2-manage/panel/templates/${t.id}/fields`)}>
+                  <ListOrdered className="w-3 h-3" /> حقول
+                </Button>
+                <Button size="sm" variant="outline" className="text-xs" onClick={() => navigate(`/x9k2-manage/panel/templates/${t.id}/assets`)}>
+                  <ImageIcon className="w-3 h-3" /> أصول
+                </Button>
+              </div>
               <div className="flex gap-2 mt-4">
                 <Button
                   size="sm"

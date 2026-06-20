@@ -158,10 +158,15 @@ export default function ClientOrderDetailPage() {
                 فتح المحادثة
               </Button>
               {order.status !== 'ACCEPTED' && (
-                <Button variant="primary" className="w-full" onClick={() => navigate(`/dashboard/orders/${order.id}/deploy`)}>
-                  <Rocket className="w-5 h-5" />
-                  نشر المشروع
-                </Button>
+                <>
+                  <Button variant="primary" className="w-full" onClick={() => navigate(`/dashboard/orders/${order.id}/project`)}>
+                    تخصيص القالب
+                  </Button>
+                  <Button variant="primary" className="w-full" onClick={() => navigate(`/dashboard/orders/${order.id}/deploy`)}>
+                    <Rocket className="w-5 h-5" />
+                    نشر المشروع
+                  </Button>
+                </>
               )}
             </>
           )}

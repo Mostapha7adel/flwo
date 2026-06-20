@@ -74,6 +74,8 @@ model User {
   directConversations Conversation[] @relation("DirectConversations")
   servers       Server[]
   subscription Subscription?
+  templateReviews TemplateReview[]
+  customerProjects CustomerProject[]
 
   @@index([email])
   @@index([phone])
@@ -113,6 +115,8 @@ model Template {
   gallery       String[]
   videoUrl      String?
   features      Json?
+  templateType  String? @db.VarChar(30)
+  framework     String? @db.VarChar(50)
   deploymentType String? @db.VarChar(20)
   deploymentScript String? @db.Text
   sourceUrl     String?  @db.Text
@@ -123,6 +127,10 @@ model Template {
 
   orders  Order[]
   versions TemplateVersion[]
+  fields  TemplateField[]
+  assets  TemplateAsset[]
+  reviews TemplateReview[]
+  projects CustomerProject[]
 
   @@index([isPublished])
   @@index([category])
@@ -148,6 +156,76 @@ model TemplateVersion {
   @@map("template_versions")
 }
 
+model TemplateField {
+  id         String   @id @default(cuid())
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  key        String   @db.VarChar(50)
+  label      String   @db.VarChar(100)
+  type       String   @db.VarChar(20)
+  required   Boolean  @default(false)
+  defaultValue String? @db.Text
+  options    String[]
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@unique([templateId, key])
+  @@index([templateId])
+  @@map("template_fields")
+}
+
+model TemplateAsset {
+  id         String   @id @default(cuid())
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  type       String   @db.VarChar(20)
+  url        String   @db.Text
+  label      String?  @db.VarChar(200)
+  fileSize   Int      @default(0)
+  mimeType   String?  @db.VarChar(50)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([templateId])
+  @@index([type])
+  @@map("template_assets")
+}
+
+model TemplateReview {
+  id         String   @id @default(cuid())
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  rating     Int
+  comment    String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  @@unique([templateId, userId])
+  @@index([templateId])
+  @@index([rating])
+  @@map("template_reviews")
+}
+
+model CustomerProject {
+  id         String   @id @default(cuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id])
+  config     Json
+  previewUrl String?  @db.Text
+  publishedUrl String? @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([templateId])
+  @@map("customer_projects")
+}
+
 model Order {
   id            String      @id @default(cuid())
   orderNumber   String      @unique
@@ -164,6 +242,7 @@ model Order {
 
   conversation Conversation?
   deployment   Deployment?
+  customerProject CustomerProject?
 
   @@index([userId])
   @@index([status])
